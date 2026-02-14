@@ -12,6 +12,8 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 
+#include "vis.h" // Custom visualization library for text graphics
+
 // -------------------------------------------------------------------------
 // Constants & Configuration
 // -------------------------------------------------------------------------
@@ -32,6 +34,49 @@
 /** @brief The raw ADC resolution (12-bit = 0-4095) */
 #define ADC_MAX_VAL         4095
 
+
+/***********************
+ * ROTATION CONFIGURATION
+ * Adjust these flags to match your joystick's physical mounting.
+ * This allows you to correct for any orientation without changing wiring.
+ ***********************/
+/**
+ * @struct JoystickTransformConfig
+ * @brief configuration flags for the mathematical transformation pipeline.
+ * * Any of the 8 possible orientations can be represented by a unique
+ * combination of these three boolean flags.
+ */
+typedef struct {
+    bool swap_xy;   /**< If true, X and Y inputs are swapped first. */
+    bool invert_x;  /**< If true, the resulting X output is inverted (Max - X). */
+    bool invert_y;  /**< If true, the resulting Y output is inverted (Max - Y). */
+} JoystickTransformConfig;
+
+/**
+ * @brief Global Transformation Configuration.
+ * * Adjust these 3 flags to match your mounting.
+ * * EXAMPLE MAPPINGS:
+ * - Standard (Zero) : {false, false, false}
+ * - Clockwise 90    : {true,  false, true }  (Swap -> Invert Y)
+ * - Clockwise 180   : {false, true,  true }  (Invert X -> Invert Y)
+ * - Clockwise 270   : {true,  true,  false}  (Swap -> Invert X)
+ * Orientation,Swap XY?,Invert X?,Invert Y?
+Standard (0°),false,false,false
+CW 90°,true,false,true
+CW 180°,false,true,true
+CW 270°,true,true,false
+Mirror 0°,true,false,false
+Mirror 90°,false,false,true
+Mirror 180°,true,true,true
+Mirror 270°,false,true,false
+ */
+static JoystickTransformConfig g_transform_config = {
+    .swap_xy  = true,   // Example: Swap X/Y
+    .invert_x = false,
+    .invert_y = false    // Example: Then invert Y (Result: Clockwise 90)
+};
+
+
 // -------------------------------------------------------------------------
 // File-Global State Variables (Static for Compartmentalization)
 // -------------------------------------------------------------------------
@@ -50,6 +95,7 @@ static uint16_t g_y_raw = 2048;
  * @note static keyword limits scope to this file. 
  */
 static bool g_is_pressed = false;
+
 
 // -------------------------------------------------------------------------
 // Module: Initialization
@@ -84,99 +130,99 @@ void system_init(void) {
     printf("System Initialized. Starting Main Loop...\n");
 }
 
+/**
+ * @brief SERIAL PLOTTER COMPATIBLE OUTPUT
+ * * USAGE: Use this if you want to see a real graph.
+ * * Most IDEs (Arduino, VS Code Serial Plotter) will take this format
+ * and turn it into a real-time line graph automatically.
+ * * This effectively uses the HOST computer as the visualization library.
+ */
+void output_visualization(void) {
+    // Format: "Label1:Value1, Label2:Value2"
+    // The "\r\n" at the end tells the plotter "End of Frame"
+    printf("X_Axis:%d,Y_Axis:%d,Btn_Signal:%d\r\n", 
+           g_x_raw, 
+           g_y_raw, 
+           g_is_pressed ? 4095 : 0); // Scale button to max for visibility on graph
+}
+
 // -------------------------------------------------------------------------
 // Module: Input Reader
 // -------------------------------------------------------------------------
 
 /**
- * @brief Reads the hardware sensors and updates file-global variables.
- * * Performs three distinct reads:
- * 1. Switches ADC mux to X channel and samples.
- * 2. Switches ADC mux to Y channel and samples.
- * 3. Reads the digital logic level of the switch pin.
+ * @brief Reads hardware sensors and applies the 3-stage transformation pipeline.
+ * * Strategy:
+ * 1. Read Raw ADC.
+ * 2. Stage 1: Swap Axis (Reflection).
+ * 3. Stage 2: Invert X (Reflection).
+ * 4. Stage 3: Invert Y (Reflection).
+ * * This pipeline covers the entire Dihedral Group D4.
  */
 void read_joystick_input(void) {
-    // Read X Axis
+    // 1. Read Physical Hardware
     adc_select_input(ADC_CH_X);
-    g_x_raw = adc_read();
+    uint16_t raw_x = adc_read();
 
-    // Read Y Axis
     adc_select_input(ADC_CH_Y);
-    g_y_raw = adc_read();
+    uint16_t raw_y = adc_read();
 
-    // Read Button (Invert logic because of pull-up: Low = Pressed)
+    // 2. Read Button (Logic inverted: Low = Pressed)
     g_is_pressed = !gpio_get(PIN_JOYSTICK_SW);
-}
 
+    // --- PIPELINE STAGE 1: SWAP XY ---
+    // Mathematically equivalent to reflecting across the diagonal y=x
+    if (g_transform_config.swap_xy) {
+        uint16_t temp = raw_x;
+        raw_x = raw_y;
+        raw_y = temp;
+    }
+
+    // --- PIPELINE STAGE 2: INVERT X ---
+    // Mathematically equivalent to reflecting across the Y-axis
+    if (g_transform_config.invert_x) {
+        raw_x = ADC_MAX_VAL - raw_x;
+    }
+
+    // --- PIPELINE STAGE 3: INVERT Y ---
+    // Mathematically equivalent to reflecting across the X-axis
+    if (g_transform_config.invert_y) {
+        raw_y = ADC_MAX_VAL - raw_y;
+    }
+
+    // 3. Update Global State
+    g_x_raw = raw_x;
+    g_y_raw = raw_y;
+}
 // -------------------------------------------------------------------------
 // Module: Output / Visualization
 // -------------------------------------------------------------------------
+
 /**
- * @brief Renders the frame using efficient terminal manipulation.
- * * Uses putchar() for the grid to minimize overhead and fflush() 
- * to ensure the frame renders instantly as one block.
+ * @brief ROBUST BACKUP: Single-line animation using Carriage Return (\r).
+ * * USAGE: Use this if the multi-line box looks garbled on your terminal.
+ * * LOGIC: \r moves cursor to start of line. We then overwrite the line.
+ * * Extra spaces at the end ensure we clear any leftover junk characters.
  */
-void output_debug_animation(void) {
-    const int GRID_W = 15;
-    const int GRID_H = 9;
-    
-    // 1. Calculate Cursor Position relative to grid
-    int pos_x = (g_x_raw * GRID_W) / ADC_MAX_VAL;
-    int pos_y = (g_y_raw * GRID_H) / ADC_MAX_VAL;
+void output_debug_animation_single_line(void) {
+    char x_bar[20];
+    char y_bar[20];
 
-    // Clamp values
-    if (pos_x >= GRID_W) pos_x = GRID_W - 1;
-    if (pos_y >= GRID_H) pos_y = GRID_H - 1;
+    // Use the "Library" to generate visual bars
+    viz_generate_bar(g_x_raw, ADC_MAX_VAL, 10, x_bar);
+    viz_generate_bar(g_y_raw, ADC_MAX_VAL, 10, y_bar);
 
-    // 2. Prepare Frame Start
-    // \033[H : Move cursor to Top-Left (Home). Do NOT clear screen (prevents flicker).
-    // printf("\033[H"); 
-
-    // 3. Print Header Information
-    // printf("=== RP2350 VISUALIZER ===\n");
-    printf("X: %04d | Y: %04d | BTN: %s  \n\r", // Extra spaces at end to overwrite old text
+    // \r : Return to start of line (Do NOT use \n)
+    printf("\rJOYSTICK: X %s %4d | Y %s %4d | BTN: %s      ", 
+           x_bar, 
            g_x_raw, 
+           y_bar, 
            g_y_raw, 
-           g_is_pressed ? "ON " : "OFF");
-    // printf("-------------------------\n");
-
-    // // 4. Render Grid using putchar
-    // for (int y = 0; y < GRID_H; y++) {
-    //     putchar('|'); // Left Border
-
-    //     for (int x = 0; x < GRID_W; x++) {
-    //         if (x == pos_x && y == pos_y) {
-    //             // Joystick Cursor
-    //             if (g_is_pressed) {
-    //                 putchar('X'); 
-    //             } else {
-    //                 putchar('O');
-    //             }
-    //         } else if (x == GRID_W/2 && y == GRID_H/2) {
-    //             // Center Crosshair
-    //             putchar('+'); 
-    //         } else {
-    //             // Empty Space
-    //             putchar(' '); 
-    //         }
-    //     }
-        
-    //     putchar('|'); // Right Border
-    //     putchar('\n'); // End of row
-    // }
-    // printf("-------------------------\n");
-
-    // // 5. Clean up remainder of screen
-    // // \033[J : Clear from cursor to end of screen. 
-    // // This removes any artifacts if the previous frame was somehow longer.
-    // printf("\033[J");
-
-    // // 6. Force Output
-    // // Important: stdout is buffered. fflush forces the buffer to be written 
-    // // to the serial port NOW, ensuring the whole frame appears at once.
-    // fflush(stdout); 
+           g_is_pressed ? "[PRESS]" : "[     ]");
+    
+    // Force immediate output
+    fflush(stdout); 
 }
-
 // -------------------------------------------------------------------------
 // Main Callback & Loop
 // -------------------------------------------------------------------------
@@ -191,7 +237,7 @@ void main_loop_callback(void) {
     read_joystick_input();
 
     // 2. Visualize Data (reads static variables)
-    output_debug_animation();
+    output_debug_animation_single_line();
 }
 
 /**
@@ -209,6 +255,6 @@ int main() {
         main_loop_callback();
         
         // 50ms delay = ~20 frames per second
-        sleep_ms(500);
+        sleep_ms(50);
     }
 }
