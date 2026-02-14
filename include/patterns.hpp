@@ -16,29 +16,6 @@ typedef struct
     uint8_t r, g, b;
 } RGB;
 
-/// @brief breathing pattern
-/// @param leds
-/// @param t
-void pattern_breathe(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t);
-
-/// @brief diagonal comet pattern
-/// @param leds
-/// @param t
-void pattern_comet(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t);
-
-/// @brief rainbow pattern
-/// @param leds
-/// @param t
-void pattern_rainbow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t);
-
-/// @brief ripple pattern about key hit
-/// @param leds
-/// @param t
-/// @param hit_x
-/// @param hit_y
-/// @param hit_time
-void pattern_ripple(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int hit_x, int hit_y, float hit_time);
-
 /// @brief sine wave
 /// @param leds
 /// @param t
@@ -65,3 +42,14 @@ void pattern_rainbow_cycle(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float 
 /// @param omega
 /// @param color
 void pattern_traveling_wave(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float L, float omega, RGB color);
+
+///
+
+///
+void pattern_ripple();
+
+void pattern_column_flash();
+
+void pattern_heat_map();
+
+void pattern_snake();
