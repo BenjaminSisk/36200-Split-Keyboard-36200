@@ -1,0 +1,1 @@
+pico_generate_pio_header(example_ws2812.pio)
