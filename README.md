@@ -1,4 +1,8 @@
-## links
+# Overview
+
+Check out this [link](https://drive.google.com/file/d/1josPRPToi0hVMcOZqZrqSURNXhiCR-l0/view?usp=sharing) to see the general structure of the LED strip modules.
+
+## Useful links
 
 [ws2812 driver](https://iosoft.blog/2020/09/29/raspberry-pi-multi-channel-ws2812/)
 
