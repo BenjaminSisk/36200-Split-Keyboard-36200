@@ -2,49 +2,56 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 
-// Define the GPIO pins we are using
-const uint JOYSTICK_X_PIN = 26; // ADC0
-const uint JOYSTICK_Y_PIN = 27; // ADC1
-const uint JOYSTICK_SW_PIN = 22; // Digital Button
+// --- Configuration for RP2350 QFN-80 ---
+// ADC Channel 0 is on GPIO 40
+const uint JOYSTICK_X_PIN = 40; 
+const uint JOYSTICK_X_ADC_CHANNEL = 0;
+
+// ADC Channel 1 is on GPIO 41
+const uint JOYSTICK_Y_PIN = 41; 
+const uint JOYSTICK_Y_ADC_CHANNEL = 1;
+
+// Digital Button (Moved to GPIO 38)
+const uint JOYSTICK_SW_PIN = 38; 
 
 int main() {
     stdio_init_all();
-    printf("RP2350 Joystick Test Starting...\n");
+    printf("RP2350 QFN-80 Joystick Test Starting...\n");
 
-    // --- Initialize ADC (Analog to Digital Converter) ---
+    // --- 1. Initialize ADC ---
     adc_init();
 
-    // Make sure the GPIO pins are set to high-impedance (ADC mode)
+    // Prepare GPIO 40 and 41 for Analog function
+    // This disables digital logic on these pins to allow accurate analog reads
     adc_gpio_init(JOYSTICK_X_PIN);
     adc_gpio_init(JOYSTICK_Y_PIN);
 
-    // --- Initialize Button (Digital Input) ---
+    // --- 2. Initialize Button (Digital Input) ---
     gpio_init(JOYSTICK_SW_PIN);
     gpio_set_dir(JOYSTICK_SW_PIN, GPIO_IN);
-    // Enable the internal pull-up resistor. 
-    // The switch connects to GND when pressed, so logic is inverted (Low = Pressed).
+    // Enable internal pull-up. Button connects to GND when pressed.
     gpio_pull_up(JOYSTICK_SW_PIN);
 
     while (true) {
-        // Read X-Axis (Connected to ADC0 / GP26)
-        adc_select_input(0); 
+        // --- Read X-Axis ---
+        adc_select_input(JOYSTICK_X_ADC_CHANNEL); 
         uint16_t x_raw = adc_read();
 
-        // Read Y-Axis (Connected to ADC1 / GP27)
-        adc_select_input(1); 
+        // --- Read Y-Axis ---
+        adc_select_input(JOYSTICK_Y_ADC_CHANNEL); 
         uint16_t y_raw = adc_read();
 
-        // Read Switch (0 = Pressed, 1 = Not Pressed)
-        bool sw_state = gpio_get(JOYSTICK_SW_PIN);
+        // --- Read Switch ---
+        // logic: 0 = Pressed, 1 = Released
+        bool sw_pressed = !gpio_get(JOYSTICK_SW_PIN); 
 
         // --- Output Data ---
-        // ADC values range from 0 to 4095 (12-bit)
-        // Center is approx 2048
-        printf("X: %d | Y: %d | Button: %s\n", 
+        // 12-bit ADC resolution (0 - 4095)
+        printf("X: %4d | Y: %4d | Button: %s\n", 
                x_raw, 
                y_raw, 
-               sw_state ? "Released" : "PRESSED");
+               sw_pressed ? "PRESSED" : "Open");
 
-        sleep_ms(100); // Delay to make the serial output readable
+        sleep_ms(100); 
     }
 }
