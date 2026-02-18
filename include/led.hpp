@@ -10,6 +10,8 @@
 #include "hardware/irq.h"
 #include "pico/time.h"
 
+#include "patterns.hpp"
+
 #define FRAC_BITS 4
 #define LEDS_PER_STRIP 6
 #define WS2812_PIN_BASE 2
@@ -24,12 +26,13 @@
 class led_strip
 {
 public:
-    led_strip(int in_pwr, int in_gnd, int in_data, int in_spacing)
+    led_strip(int in_pwr, int in_gnd, int in_data, int in_spacing, int in_num)
     {
         pwr_pin = in_pwr;
         gnd_pin = in_gnd;
         data_pin = in_data;
         spacing = in_spacing;
+        in_num = strip_num;
     };
 
     /// @brief init pio peripherial
@@ -49,24 +52,25 @@ public:
     /// @return 32 package for ws2812
     uint32_t make_grb(uint8_t r, uint8_t g, uint8_t b);
 
-    /// @brief writes rgb into strip buffer
+    /// @brief converts rgb struct into uint32 and loads into buffer
+    /// @param leds
     /// @param rgb
-    /// @param index
-    void put_pixel(uint32_t rgb, int index);
+    void load_buffers(RGB leds[NUM_STRIPS][LEDS_PER_STRIP]);
 
-    /// @brief updates memory pointer for next frame (output every 1ms)
+    /// @brief sends led strip buffer to pio to output
     void output_strips_dma();
 
     /// @brief wrapper for irq for outputting ws2812
     static void output_wrapper();
 
-    PIO pio;
-    uint offset;
-    int state_machine;
-    int dma_channel;
+    /// @brief sets the pattern
+    void set_pattern_mode(int new_mode);
 
-    uint8_t r, g, b;
-    uint8_t spacing;
+    /// @brief sets base rgb values
+    /// @param r
+    /// @param g
+    /// @param b
+    void set_base_color(int r, int g, int b);
 
 private:
     static led_strip *instance;
@@ -76,4 +80,25 @@ private:
     int data_pin;
 
     uint32_t rgb[LEDS_PER_STRIP];
+
+    // pio number
+    PIO pio = 0;
+    uint offset;
+    // state machine number
+    int state_machine = 0;
+    int dma_channel = 0;
+
+    // spacing used to calculate patterns
+    uint8_t spacing;
+
+    // led strip number
+    int strip_num;
+
+    // pattern mode
+    int mode = 0;
+
+    // base colors
+    int r = 255;
+    int g = 0;
+    int b = 0;
 };
