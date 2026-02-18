@@ -67,22 +67,64 @@ uint32_t led_strip::make_grb(uint8_t r, uint8_t g, uint8_t b)
     return ((uint32_t)g << 24) | ((uint32_t)r << 16) | ((uint32_t)b << 8);
 }
 
-void led_strip::put_pixel(uint32_t packet, int index)
+// MAYBE MAKE THIS DMA?
+void led_strip::load_buffers(RGB leds[NUM_STRIPS][LEDS_PER_STRIP])
 {
-    rgb[index] = packet;
+    for (int j = 0; j < LEDS_PER_STRIP; j++)
+    {
+        rgb[strip_num] = make_grb(leds[strip_num][j].r, leds[strip_num][j].g, leds[strip_num][j].b);
+    }
 }
 
+// TODO: Implement
 void led_strip::output_strips_dma()
 {
     timer_hw->intr = 1 << 0;
 
-    // reset timer
-    timer_hw->alarm[0] = timer_hw->timerawl + 20000;
+    // calculate new RGB values
+    absolute_time_t t = get_absolute_time() / 500000.0f; // change the divisor to change rate at which the LEDs change
 
-    // restarts dma transfer
+    // IMPLEMENT THIS
+    switch (mode)
+    {
+        // breathing
+    case 0:
+        break;
+        // comet
+    case 1:
+        break;
+        // rainbow cycle
+    case 2:
+        break;
+        // traveling sine wave
+    case 3:
+        break;
+
+        // ripple
+    case 4:
+        break;
+        // column flash
+    case 5:
+        break;
+        // heat map
+    case 6:
+        break;
+        // snake
+    case 7:
+        break;
+    default:
+    }
+
+    // load RGB values into strip buffer (is this necessary? idk)
+    load_buffers(leds);
+
+    // restarts dma transfer from buffer to pio
     dma_channel_set_read_addr(dma_channel, rgb, true);
 
     dma_channel_wait_for_finish_blocking(dma_channel);
+
+    // reset timer
+    timer_hw->alarm[0] = timer_hw->timerawl + 20000;
 }
 
 void led_strip::output_wrapper()
@@ -91,4 +133,16 @@ void led_strip::output_wrapper()
     {
         instance->output_strips_dma();
     }
+}
+
+void led_strip::set_pattern_mode(int new_mode)
+{
+    mode = new_mode;
+}
+
+void led_strip::set_base_color(int r0, int g0, int b0)
+{
+    r = r0;
+    g = g0;
+    b = b0;
 }
