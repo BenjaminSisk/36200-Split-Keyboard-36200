@@ -1,21 +1,25 @@
-# Overview
+# RP2350 Split Keyboard Firmware
 
-Check out this [link](https://drive.google.com/file/d/1josPRPToi0hVMcOZqZrqSURNXhiCR-l0/view?usp=sharing) to see the general structure of the LED strip modules.
+A modular, C++ based firmware for an RP2350-powered split keyboard. This project integrates multiple hardware subsystems into a unified, non-blocking architecture.
 
-## Patterns
+## Features
+* **ADC Joystick Interface:** Configurable, math-driven transformation pipeline with an integrated Exponential Moving Average (EMA) filter for noise reduction.
+* **LED Patterns:** (WIP) Dynamic visual feedback utilizing Programmable I/O (PIO).
+* **Intra-communication:** (WIP) High-speed data transfer between split keyboard halves.
+* **USB HID:** (WIP) Standardized host-computer interfacing.
 
-Here are the patterns that may (or may not) be set on the keyboard
+## Hardware Stack
+* Microcontroller: Raspberry Pi Pico 2 / RP2350 (QFN-80 Package)
+* C/C++ Pico SDK
 
-![Patterns](docs/images/led%20strip-Patterns.drawio.png)
+## Folder Structure
+* `src/`: Contains the main application logic and entry point.
+* `src/subsystems/`: Contains actively developed, project-specific hardware and logical modules (e.g., joystick, leds, comm).
+* `config/`: Global headers and hardware pinout definitions.
+* `docs/`: Project tracking, change logs, and architectural planning.
+* `tests/`: Unit testing for independent modules.
 
-## Useful links
-
-[ws2812 driver](https://iosoft.blog/2020/09/29/raspberry-pi-multi-channel-ws2812/)
-
-[pio example](https://github.com/raspberrypi/pico-examples/tree/master/pio/ws2812)
-
-- [pio explanation](https://gemini.google.com/share/2d31d635a9d8)
-
-[sdk](https://pip-assets.raspberrypi.com/categories/609-microcontroller-boards/documents/RP-009085-KB-1-raspberry-pi-pico-c-sdk.pdf?disposition=inline)
-
-[pio and dma](https://hackaday.com/2025/11/30/a-deep-dive-into-using-pio-and-dma-on-the-rp2350/)
+## Getting Started
+1. Install the Pico C/C++ SDK.
+2. Clone this repository.
+3. Use CMake to generate the build files and compile the `.uf2` binary.
