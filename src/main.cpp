@@ -94,19 +94,22 @@ void main1()
 
     while (true)
     {
-        uint32_t key_press = multicore_fifo_pop_blocking();
-        char key = (int)tolower(key_press);
-        struct Coord pos = {-1, -1};
-        if (leftHandGrid.count(key))
+        if (multicore_fifo_rvalid())
         {
-            pos = leftHandGrid[key];
+            uint32_t key_press = multicore_fifo_pop_blocking();
+            char key = (int)tolower(key_press);
+            struct Coord pos = {-1, -1};
+            if (leftHandGrid.count(key))
+            {
+                pos = leftHandGrid[key];
+            }
+            if (rightHandGrid.count(key))
+            {
+                pos = rightHandGrid[key];
+            }
+            strips[0].x = pos.col;
+            strips[0].y = pos.row;
         }
-        if (rightHandGrid.count(key))
-        {
-            pos = rightHandGrid[key];
-        }
-        strips[0].x = pos.col;
-        strips[0].y = pos.row;
         strips[0].update();
         target = delayed_by_us(get_absolute_time(), 100);
         while (absolute_time_diff_us(get_absolute_time(), target) > 0)
