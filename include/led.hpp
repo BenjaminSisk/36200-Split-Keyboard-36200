@@ -12,7 +12,7 @@
 
 #include "patterns.hpp"
 
-#define FRAC_BITS 4
+#define NUM_STRIPS 4
 #define LEDS_PER_STRIP 6
 #define WS2812_PIN_BASE 2
 
@@ -26,13 +26,15 @@
 class led_strip
 {
 public:
-    led_strip(int in_pwr, int in_gnd, int in_data, int in_spacing, int in_num)
+    led_strip(int in_data, int in_spacing, int in_num, PIO in_pio, int in_dma_chan)
     {
-        pwr_pin = in_pwr;
-        gnd_pin = in_gnd;
         data_pin = in_data;
         spacing = in_spacing;
-        in_num = strip_num;
+        strip_num = in_num;
+        pio = in_pio;
+        dma_channel = in_dma_chan;
+
+        instance = this;
     };
 
     /// @brief init pio peripherial
@@ -55,7 +57,7 @@ public:
     /// @brief converts rgb struct into uint32 and loads into buffer
     /// @param leds
     /// @param rgb
-    void load_buffers(RGB leds[NUM_STRIPS][LEDS_PER_STRIP]);
+    void load_buffers();
 
     /// @brief sends led strip buffer to pio to output
     void output_strips_dma();
@@ -64,7 +66,7 @@ public:
     static void output_wrapper();
 
     /// @brief sets the pattern
-    void set_pattern_mode(int new_mode);
+    void set_pattern_mode(mode_type new_mode);
 
     /// @brief sets base rgb values
     /// @param r
@@ -72,21 +74,21 @@ public:
     /// @param b
     void set_base_color(int r, int g, int b);
 
-private:
-    static led_strip *instance;
-
-    int pwr_pin;
-    int gnd_pin;
-    int data_pin;
+    static void set_instance(led_strip *in_instance);
 
     uint32_t rgb[LEDS_PER_STRIP];
 
-    // pio number
-    PIO pio = 0;
+private:
+    static led_strip *instance;
+
+    int data_pin;
+
+        // pio number
+    PIO pio;
     uint offset;
     // state machine number
     int state_machine = 0;
-    int dma_channel = 0;
+    int dma_channel;
 
     // spacing used to calculate patterns
     uint8_t spacing;
@@ -95,7 +97,7 @@ private:
     int strip_num;
 
     // pattern mode
-    int mode = 0;
+    mode_type mode = BREATHING;
 
     // base colors
     int r = 255;
