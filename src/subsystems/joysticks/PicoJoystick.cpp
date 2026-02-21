@@ -3,6 +3,14 @@
 
 // Constructor Delegation: Default calls Parameterized
 PicoJoystick::PicoJoystick() 
+    /*testing: 
+     * - pin_x = 40, adc_ch_x = 0
+     * - pin_y = 41, adc_ch_y = 1
+     * - pin_sw = 38
+     * - swap_xy = true, invert_x = false, invert_y = false
+     * - timer_interval_ms = -10 (negative for exact delay between executions)
+     * - ema_alpha = 0.2 (moderate smoothing)
+     */
     : PicoJoystick(40, 0, 41, 1, 38, {true, false, false}, -10, 0.2f) {}
 
 // Parameterized Constructor
@@ -119,4 +127,13 @@ void PicoJoystick::debugPrintSingleLine() const {
     
     // Force immediate output to the console
     fflush(stdout); 
+}
+
+void PicoJoystick::testing_QuickInit() {
+    init();
+    startTimer();
+}
+
+void PicoJoystick::debugPrint() const {
+    debugPrintSingleLine();
 }

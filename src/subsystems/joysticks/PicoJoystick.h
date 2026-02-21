@@ -53,9 +53,22 @@ public:
 
     void init();
     void startTimer();
+
+    /**
+     * @brief Rapid initialization for testing environments.
+     * Calls init() and startTimer() sequentially.
+     */
+    void testing_QuickInit();
+
     void update(); // Now meant to be called by the IRQ
     
     void debugPrintSingleLine() const;
+
+    /**
+     * @brief Unified debug print interface.
+     * Currently wraps debugPrintSingleLine().
+     */
+    void debugPrint() const;
 
     // Getters
     uint16_t getX() const { return x_filtered; }
