@@ -78,6 +78,9 @@ public:
     /// @param in_instance
     static void set_instance(int index, led_strip *in_instance);
 
+    static int x;
+    static int y;
+
 private:
     static led_strip *instances[NUM_STRIPS];
 
