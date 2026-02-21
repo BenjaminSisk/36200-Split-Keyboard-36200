@@ -1,6 +1,8 @@
 #include "led.hpp"
 
 led_strip *led_strip::instances[NUM_STRIPS] = {nullptr};
+int led_strip::x = 0;
+int led_strip::y = 0;
 
 void led_strip::init(int in_data, int in_spacing, int in_num, PIO in_pio, int in_sm, int in_dma_chan)
 {
@@ -10,8 +12,6 @@ void led_strip::init(int in_data, int in_spacing, int in_num, PIO in_pio, int in
     pio = in_pio;
     dma_channel = in_dma_chan;
     state_machine = in_sm;
-    x = 0;
-    y = 0;
 
     instances[in_num] = this;
 }
