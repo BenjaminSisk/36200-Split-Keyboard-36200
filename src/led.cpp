@@ -10,6 +10,8 @@ void led_strip::init(int in_data, int in_spacing, int in_num, PIO in_pio, int in
     pio = in_pio;
     dma_channel = in_dma_chan;
     state_machine = in_sm;
+    x = 0;
+    y = 0;
 
     instances[in_num] = this;
 }
