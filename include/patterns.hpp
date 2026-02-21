@@ -13,12 +13,12 @@
 #define LEDS_PER_STRIP 6
 #define get_time_t() absolute_time_diff_us(t, get_absolute_time()) / 1000000.0f
 
-typedef struct
+typedef struct _RGB
 {
     uint8_t r, g, b;
 } RGB;
 
-RGB leds[NUM_STRIPS][LEDS_PER_STRIP];
+extern RGB leds[NUM_STRIPS][LEDS_PER_STRIP];
 
 void init_led();
 
@@ -30,14 +30,14 @@ void hue_to_rgb(float hue, int i, int j);
 /// @param leds
 /// @param t
 /// @param target_color
-void pattern_sine_glow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, RGB color);
+void pattern_sine_glow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int r, int g, int b);
 
 /// @brief single color linear comet
 /// @param leds
 /// @param t
 /// @param decay
 /// @param color
-void pattern_comet_linear(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float decay, RGB color);
+void pattern_comet_linear(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float decay, int r, int g, int b);
 
 /// @brief all led rainbow cycle
 /// @param leds
