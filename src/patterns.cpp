@@ -16,7 +16,7 @@ void init_led()
     }
 }
 
-float get_hue(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], int i, int j)
+float get_hue(int i, int j)
 {
     float r_p = leds[i][j].r / 255.0f;
     float g_p = leds[i][j].g / 255.0f;
@@ -72,7 +72,7 @@ void hue_to_rgb(float hue, int i, int j)
 }
 
 // TODO: IMPLEMENT PATTERNS
-void pattern_sine_glow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int r, int g, int b)
+void pattern_sine_glow(float t, int r, int g, int b)
 {
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -86,7 +86,7 @@ void pattern_sine_glow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int r, int
 }
 
 // decay should be greater than 0.75
-void pattern_comet_linear(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float decay, int r, int g, int b)
+void pattern_comet_linear(float t, float decay, int r, int g, int b)
 {
     for (int s = 0; s < NUM_STRIPS; s++)
     {
@@ -112,7 +112,7 @@ void pattern_comet_linear(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float d
 }
 
 // spatial freq goes from 0 (1 solid changing color) to 255.0/LEDS_PER_STRIP
-void pattern_rainbow_linear(RGB leds[4][6], float t, float spatial_freq)
+void pattern_rainbow_linear(float t, float spatial_freq)
 {
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -127,7 +127,7 @@ void pattern_rainbow_linear(RGB leds[4][6], float t, float spatial_freq)
 }
 
 // rainbow wave
-void pattern_traveling_wave(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float L, float omega)
+void pattern_traveling_wave(float t, float L, float omega)
 {
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -148,7 +148,7 @@ void pattern_traveling_wave(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float
 
 // NEED TO ADJUST t
 // (x,y) == (-1,-1) if no key press
-void pattern_ripple(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float decay, int x, int y)
+void pattern_ripple(float t, float decay, int x, int y)
 {
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -170,7 +170,7 @@ void pattern_ripple(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float decay, 
     }
 }
 
-void pattern_column_flash(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int x, int y)
+void pattern_column_flash(float t, int x, int y)
 {
     float fadeSpeed = 3.0;                  // Higher = faster fade
     float brightness = exp(-fadeSpeed * t); // Exponential decay (starts at 1.0)
