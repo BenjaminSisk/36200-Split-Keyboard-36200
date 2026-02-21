@@ -75,8 +75,48 @@ void PicoJoystick::update() {
     applyEMA(current_x, current_y);
 }
 
+// void PicoJoystick::debugPrintSingleLine() const {
+//     printf("\rJOYSTICK [EMA]: X %4d | Y %4d | BTN: %s      ", 
+//            x_filtered, y_filtered, is_pressed ? "[PRESS]" : "[     ]");
+//     fflush(stdout); 
+// }
 void PicoJoystick::debugPrintSingleLine() const {
-    printf("\rJOYSTICK [EMA]: X %4d | Y %4d | BTN: %s      ", 
-           x_filtered, y_filtered, is_pressed ? "[PRESS]" : "[     ]");
+    const int bar_width = 10;
+    
+    // Arrays to hold: '[' + 10 chars + ']' + null terminator
+    char x_bar[bar_width + 3]; 
+    char y_bar[bar_width + 3]; 
+
+    // Calculate filled positions based on the filtered EMA values
+    int x_hashes = (x_filtered * bar_width) / ADC_MAX_VAL;
+    int y_hashes = (y_filtered * bar_width) / ADC_MAX_VAL;
+
+    // Clamp values to strictly prevent buffer overflow in edge cases
+    if (x_hashes > bar_width) x_hashes = bar_width;
+    if (y_hashes > bar_width) y_hashes = bar_width;
+
+    // Build X Bar string: e.g., "[###       ]"
+    x_bar[0] = '[';
+    for (int i = 0; i < bar_width; i++) {
+        x_bar[i + 1] = (i < x_hashes) ? '#' : ' ';
+    }
+    x_bar[bar_width + 1] = ']';
+    x_bar[bar_width + 2] = '\0';
+
+    // Build Y Bar string: e.g., "[###       ]"
+    y_bar[0] = '[';
+    for (int i = 0; i < bar_width; i++) {
+        y_bar[i + 1] = (i < y_hashes) ? '#' : ' ';
+    }
+    y_bar[bar_width + 1] = ']';
+    y_bar[bar_width + 2] = '\0';
+
+    // Print the formatted string, overwriting the current line (\r)
+    printf("\rJOYSTICK [EMA]: X %s %4d | Y %s %4d | BTN: %s      ", 
+           x_bar, x_filtered, 
+           y_bar, y_filtered, 
+           is_pressed ? "[PRESS]" : "[     ]");
+    
+    // Force immediate output to the console
     fflush(stdout); 
 }
