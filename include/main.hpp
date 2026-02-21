@@ -1,4 +1,6 @@
 #include "pico/multicore.h"
+#include <map>
+#include <vector>
 
 #include "led.hpp"
 #include "patterns.hpp"
