@@ -26,16 +26,10 @@
 class led_strip
 {
 public:
-    led_strip(int in_data, int in_spacing, int in_num, PIO in_pio, int in_dma_chan)
-    {
-        data_pin = in_data;
-        spacing = in_spacing;
-        strip_num = in_num;
-        pio = in_pio;
-        dma_channel = in_dma_chan;
+    led_strip() {};
 
-        instance = this;
-    };
+    /// @brief init pins
+    void init(int in_data, int in_spacing, int in_num, PIO in_pio, int in_sm, int in_dma_chan);
 
     /// @brief init pio peripherial
     void init_pio();
@@ -59,7 +53,13 @@ public:
     /// @param rgb
     void load_buffers();
 
+    /// @brief calculates new RGB values from pattern and loads into buffer
+    void update();
+
     /// @brief sends led strip buffer to pio to output
+    void output_strip();
+
+    /// @brief sends led strip buffer to pio to output with dma
     void output_strips_dma();
 
     /// @brief wrapper for irq for outputting ws2812
@@ -74,20 +74,22 @@ public:
     /// @param b
     void set_base_color(int r, int g, int b);
 
-    static void set_instance(led_strip *in_instance);
-
-    uint32_t rgb[LEDS_PER_STRIP];
+    /// @brief inits instance
+    /// @param in_instance
+    static void set_instance(int index, led_strip *in_instance);
 
 private:
-    static led_strip *instance;
+    static led_strip *instances[NUM_STRIPS];
 
     int data_pin;
 
-        // pio number
+    uint32_t rgb[LEDS_PER_STRIP];
+
+    // pio number
     PIO pio;
     uint offset;
     // state machine number
-    int state_machine = 0;
+    int state_machine;
     int dma_channel;
 
     // spacing used to calculate patterns

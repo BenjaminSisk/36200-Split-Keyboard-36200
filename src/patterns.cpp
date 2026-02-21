@@ -78,9 +78,9 @@ void pattern_sine_glow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int r, int
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
         {
-            leds[i][j].r = r * (sin(t + j * 0.5) + 1) / 2;
-            leds[i][j].g = g * (sin(t + j * 0.5) + 1) / 2;
-            leds[i][j].b = b * (sin(t + j * 0.5) + 1) / 2;
+            leds[i][j].r = r * (sin(t / 10 + j * 0.5) + 1) / 2;
+            leds[i][j].g = g * (sin(t / 10 + j * 0.5) + 1) / 2;
+            leds[i][j].b = b * (sin(t / 10 + j * 0.5) + 1) / 2;
         }
     }
 }
@@ -137,9 +137,9 @@ void pattern_traveling_wave(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float
 
             hue_to_rgb(hue, i, j);
 
-            leds[i][j].r *= (sin(2 * M_PI * j / L - omega * (t + 0.5 * i)) + 1) / 2;
-            leds[i][j].g *= (sin(2 * M_PI * j / L - omega * (t + 0.5 * i)) + 1) / 2;
-            leds[i][j].b *= (sin(2 * M_PI * j / L - omega * (t + 0.5 * i)) + 1) / 2;
+            leds[i][j].r *= (sin(2 * M_PI * j / L - omega * (t / 10 + 0.5 * i)) + 1) / 2;
+            leds[i][j].g *= (sin(2 * M_PI * j / L - omega * (t / 10 + 0.5 * i)) + 1) / 2;
+            leds[i][j].b *= (sin(2 * M_PI * j / L - omega * (t / 10 + 0.5 * i)) + 1) / 2;
         }
     }
 }
