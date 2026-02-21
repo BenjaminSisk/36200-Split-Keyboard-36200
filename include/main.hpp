@@ -1,14 +1,11 @@
+#include "pico/multicore.h"
+
 #include "led.hpp"
 #include "patterns.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "pico/stdlib.h"
-#include "hardware/pio.h"
-#include "hardware/dma.h"
-#include "hardware/irq.h"
-#include "pico/time.h"
-
+/// @brief main core 0
+/// @return
 extern "C" int main();
+
+/// @brief main core 1
+void main1();

@@ -1,91 +1,91 @@
-// #include "main.hpp"
+#include "main.hpp"
 
-// extern "C" int main()
-// {
-//     stdio_init_all();
-//     gpio_init(11);
-//     gpio_set_dir(11, true);
+#define DATAPIN0 25
+#define SPACING 10
 
-//     sleep_ms(2000);
+void main1()
+{
+    init_led();
+    led_strip strips[NUM_STRIPS];
+    printf("Starting initialization...\n");
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        int dma_chan = dma_claim_unused_channel(true);
+        strips[i].init(DATAPIN0 + i, SPACING, i, pio0, i, dma_chan);
 
-//     printf("Starting initialization...\n");
-//     int dma_chan = dma_claim_unused_channel(true);
-//     led_strip strip(11, 10, 0, pio0, dma_chan);
+        strips[i].set_instance(i, &(strips[i]));
+        printf("Instance pointer set to: %p\n", (void *)&(strips[i]));
 
-//     led_strip::set_instance(&strip);
-//     printf("Instance pointer set to: %p\n", (void *)&strip);
+        strips[i].set_base_color(255, 255, 255);
+        strips[i].set_pattern_mode(RAINBOW_CYCLE);
 
-//     init_led();
-//     strip.set_base_color(255, 255, 255);
-//     strip.set_pattern_mode(BREATHING);
+        strips[i].init_pio();
+        strips[i].init_dma();
+        strips[i].init_timer();
+    }
 
-//     strip.init_pio();
-//     strip.init_dma();
+    printf("Initialization complete. Entering loop.\n");
 
-//     strip.init_timer();
+    absolute_time_t target;
 
-//     printf("Initialization complete. Entering loop.\n");
+    while (true)
+    {
+        strips[0].update();
+        target = delayed_by_us(get_absolute_time(), 100);
+        while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+        {
+            tight_loop_contents();
+        }
 
-//     dma_start_channel_mask((1 << dma_chan));
-//     printf("started channel\n");
+        // strip.set_pattern_mode(COMET);
+        // target = delayed_by_ms(get_absolute_time(), 5000);
+        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+        // {
+        //     // Do nothing, just keep the CPU cycling
+        //     tight_loop_contents();
+        // }
 
-//     pio_sm_put_blocking(pio0, 0, 0xff000000);
-//     printf("pio done\n");
+        // strip.set_pattern_mode(RAINBOW_CYCLE);
+        // target = delayed_by_ms(get_absolute_time(), 10000);
+        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+        // {
+        //     // Do nothing, just keep the CPU cycling
+        //     tight_loop_contents();
+        // }
 
-//     for (int i = 0; i < LEDS_PER_STRIP; i++)
-//     {
-//         leds[0][i].r = 255;
-//         leds[0][i].g = 0;
-//         leds[0][i].b = 0;
-//     }
+        // strip.set_pattern_mode(TRAVELING_RAINBOW);
+        // target = delayed_by_ms(get_absolute_time(), 10000);
+        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+        // {
+        //     // Do nothing, just keep the CPU cycling
+        //     tight_loop_contents();
+        // }
 
-//     strip.load_buffers();
+        // strip.set_pattern_mode(RIPPLE);
+        // target = delayed_by_ms(get_absolute_time(), 1000);
+        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+        // {
+        //     // Do nothing, just keep the CPU cycling
+        //     tight_loop_contents();
+        // }
 
-//     dma_channel_set_read_addr(dma_chan, strip.rgb, true);
-//     sleep_ms(2000);
-//     while (true)
-//     {
-//         tight_loop_contents();
-//     }
-
-//     return 0;
-// }
-
-#include "pico/stdlib.h"
-#include "hardware/pio.h"
-#include "example_ws2812.pio.h"
-
-#define IS_RGBW false
-#define NUM_LEDS 6
-#define DATA_PIN 11
+        // strip.set_pattern_mode(COLUMN_FLASH);
+        // target = delayed_by_ms(get_absolute_time(), 1000);
+        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+        // {
+        //     // Do nothing, just keep the CPU cycling
+        //     tight_loop_contents();
+        // }
+    }
+}
 
 extern "C" int main()
 {
     stdio_init_all();
 
-    // 1. Initialize the PIO
-    PIO pio = pio0;
-    uint state_machine = 0;
-    uint offset = pio_add_program(pio, &ws2812_program);
+    sleep_ms(500);
 
-    // 2. Use the helper function provided by your .pio.h file
-    // Note: 800000 is the 800kHz frequency WS2812 expects
-    ws2812_program_init(pio, state_machine, offset, DATA_PIN, 800000, IS_RGBW);
+    multicore_launch_core1(main1);
 
-    while (true)
-    {
-        for (int i = 0; i < NUM_LEDS; i++)
-        {
-            // WS2812 expects GRB order.
-            // Format: 0xGGRRBB00
-            // Since the PIO shifts out 24 bits, we put Red in the middle byte
-            // and shift it left so Red is the second 8-bit block sent.
-            uint32_t red_pixel = (0x00 << 24) | (0xFF << 16) | (0x00 << 8);
-
-            pio_sm_put(pio, state_machine, red_pixel);
-        }
-
-        // Wait 1 second before refreshing (WS2812 stays lit until updated)
-        sleep_ms(1000);
-    }
+    return 0;
 }
