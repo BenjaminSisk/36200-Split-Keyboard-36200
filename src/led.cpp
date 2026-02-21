@@ -88,22 +88,22 @@ void led_strip::update()
     switch (mode)
     {
     case BREATHING:
-        pattern_sine_glow(leds, t, r, g, b);
+        pattern_sine_glow(t, r, g, b);
         break;
     case COMET:
-        pattern_comet_linear(leds, t, 0.8, r, g, b);
+        pattern_comet_linear(t, 0.8, r, g, b);
         break;
     case RAINBOW_CYCLE:
-        pattern_rainbow_linear(leds, t, 255.0 / LEDS_PER_STRIP);
+        pattern_rainbow_linear(t, 255.0 / LEDS_PER_STRIP);
         break;
     case TRAVELING_RAINBOW:
-        pattern_traveling_wave(leds, t, 48, 2);
+        pattern_traveling_wave(t, 48, 2);
         break;
     case RIPPLE:
-        pattern_ripple(leds, t, 0.8, 2, 3);
+        pattern_ripple(t, 0.8, 2, 3);
         break;
     case COLUMN_FLASH:
-        pattern_column_flash(leds, t, 2, 3);
+        pattern_column_flash(t, 2, 3);
         break;
     case HEAT_MAP:
         break;
