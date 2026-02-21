@@ -1,5 +1,7 @@
 #include "patterns.hpp"
 
+RGB leds[NUM_STRIPS][LEDS_PER_STRIP];
+
 void init_led()
 {
     for (int i = 0; i < NUM_STRIPS; i++)
@@ -24,6 +26,8 @@ float get_hue(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], int i, int j)
     float min_val = fmin(fmin(r_p, g_p), b_p);
 
     float del = max_val - min_val;
+    if (del < 0.001)
+        return 0;
 
     float hue = 0;
     if (max_val - r_p < 0.01)
@@ -68,21 +72,21 @@ void hue_to_rgb(float hue, int i, int j)
 }
 
 // TODO: IMPLEMENT PATTERNS
-void pattern_sine_glow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, RGB color)
+void pattern_sine_glow(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int r, int g, int b)
 {
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
         {
-            leds[NUM_STRIPS][LEDS_PER_STRIP].r = color.r * (sin(t + j * 0.5) + 1) / 2;
-            leds[NUM_STRIPS][LEDS_PER_STRIP].g = color.g * (sin(t + j * 0.5) + 1) / 2;
-            leds[NUM_STRIPS][LEDS_PER_STRIP].b = color.b * (sin(t + j * 0.5) + 1) / 2;
+            leds[i][j].r = r * (sin(t + j * 0.5) + 1) / 2;
+            leds[i][j].g = g * (sin(t + j * 0.5) + 1) / 2;
+            leds[i][j].b = b * (sin(t + j * 0.5) + 1) / 2;
         }
     }
 }
 
 // decay should be greater than 0.75
-void pattern_comet_linear(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float decay, RGB color)
+void pattern_comet_linear(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float decay, int r, int g, int b)
 {
     for (int s = 0; s < NUM_STRIPS; s++)
     {
@@ -102,9 +106,9 @@ void pattern_comet_linear(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, float d
     int p = headIndex % LEDS_PER_STRIP;
 
     // set next head
-    leds[s][p].r = color.r;
-    leds[s][p].g = color.g;
-    leds[s][p].b = color.b;
+    leds[s][p].r = r;
+    leds[s][p].g = g;
+    leds[s][p].b = b;
 }
 
 // spatial freq goes from 0 (1 solid changing color) to 255.0/LEDS_PER_STRIP
@@ -181,7 +185,9 @@ void pattern_column_flash(RGB leds[NUM_STRIPS][LEDS_PER_STRIP], float t, int x, 
         uint8_t hue = (uint8_t)((i * 40) + (t * 100) + (y * 20)) % 256;
 
         // Convert to RGB with the decay applied to the 'Value' (Brightness)
-        uint8_t v = (uint8_t)(255 * brightness);
         hue_to_rgb(hue, i, x);
+        leds[i][x].r *= brightness;
+        leds[i][x].g *= brightness;
+        leds[i][x].b *= brightness;
     }
 }
