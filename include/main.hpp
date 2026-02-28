@@ -1,6 +1,7 @@
 #include "pico/multicore.h"
 #include <map>
 #include <vector>
+#include <random>
 
 #include "led.hpp"
 #include "patterns.hpp"

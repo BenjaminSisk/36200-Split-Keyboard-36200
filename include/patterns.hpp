@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <algorithm>
+#include <random>
 #include "pico/time.h"
 
 #include "led.hpp"
@@ -66,10 +67,10 @@ void pattern_column_flash(float t, int x, int y);
 /// @param t
 /// @param x
 /// @param y
-void pattern_heat_map(float t, int x, int y);
+void pattern_heat_map(int x, int y);
 
-/// @brief leds turn on while going t next press
+/// @brief random LEDs turn on on button press
 /// @param t
 /// @param x
 /// @param y
-void pattern_snake(float t, int x, int y);
+void pattern_christmas(int x, int y);
