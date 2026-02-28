@@ -44,7 +44,7 @@ float get_hue(int i, int j)
     }
 
     if (hue < 0)
-        hue += 360;
+        hue += 255;
 
     return hue;
 }
@@ -145,9 +145,6 @@ void pattern_traveling_wave(float t, float L, float omega)
 }
 
 //
-
-// NEED TO ADJUST t
-// (x,y) == (-1,-1) if no key press
 void pattern_ripple(float t, float decay, int x, int y)
 {
     for (int i = 0; i < NUM_STRIPS; i++)
@@ -163,21 +160,16 @@ void pattern_ripple(float t, float decay, int x, int y)
             float distance = pow(pow(i - y, 2) + pow(j - x, 2), 0.5);
 
             // add decay the longer the key has not been pressed
-            leds[i][j].r *= fmax(0, 255 - decay * fabs(distance - M_PI * t));
-            leds[i][j].g *= fmax(0, 255 - decay * fabs(distance - M_PI * t));
-            leds[i][j].b *= fmax(0, 255 - decay * fabs(distance - M_PI * t));
+            leds[i][j].r *= fmax(0, 255 - decay * fabs(distance));
+            leds[i][j].g *= fmax(0, 255 - decay * fabs(distance));
+            leds[i][j].b *= fmax(0, 255 - decay * fabs(distance));
         }
     }
 }
 
 void pattern_column_flash(float t, int x, int y)
 {
-    float fadeSpeed = 3.0;                  // Higher = faster fade
-    float brightness = exp(-fadeSpeed * t); // Exponential decay (starts at 1.0)
-
-    // stop processing if the flash is too dim to see
-    if (brightness < 0.01)
-        return;
+    float decay = 0.95;
 
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -186,8 +178,54 @@ void pattern_column_flash(float t, int x, int y)
 
         // Convert to RGB with the decay applied to the 'Value' (Brightness)
         hue_to_rgb(hue, i, x);
-        leds[i][x].r *= brightness;
-        leds[i][x].g *= brightness;
-        leds[i][x].b *= brightness;
+        leds[i][x].r *= decay;
+        leds[i][x].g *= decay;
+        leds[i][x].b *= decay;
+    }
+}
+
+void pattern_heat_map(int x, int y)
+{
+    int decay = 0.975;
+
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        for (int j = 0; j < LEDS_PER_STRIP; j++)
+        {
+            uint8_t hue = i == x && j == y ? 255 : (int)get_hue(x, y);
+
+            // Convert to RGB with the decay applied to the 'Value' (Brightness)
+            hue_to_rgb(hue, i, x);
+            leds[i][j].r *= decay;
+            leds[i][j].g *= decay;
+            leds[i][j].b *= decay;
+        }
+    }
+}
+
+void pattern_christmas(int x, int y)
+{
+    float decay = 0.975;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    std::uniform_int_distribution<int> dist(0, 1279);
+
+    for (int s = 0; s < NUM_STRIPS; s++)
+    {
+        for (int p = 0; p < LEDS_PER_STRIP; p++)
+        {
+            leds[s][p].r *= decay;
+            leds[s][p].g *= decay;
+            leds[s][p].b *= decay;
+
+            int random_number = dist(gen);
+
+            if (random_number < 256)
+            {
+                hue_to_rgb(random_number, s, p);
+            }
+        }
     }
 }

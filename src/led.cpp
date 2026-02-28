@@ -91,7 +91,7 @@ void led_strip::update()
         pattern_sine_glow(t, r, g, b);
         break;
     case COMET:
-        pattern_comet_linear(t, 0.8, r, g, b);
+        pattern_comet_linear(t, 0.9, r, g, b);
         break;
     case RAINBOW_CYCLE:
         pattern_rainbow_linear(t, 255.0 / LEDS_PER_STRIP);
@@ -100,14 +100,16 @@ void led_strip::update()
         pattern_traveling_wave(t, 48, 2);
         break;
     case RIPPLE:
-        pattern_ripple(t, 0.8, 2, 3);
+        pattern_ripple(t, 0.8, x, y);
         break;
     case COLUMN_FLASH:
-        pattern_column_flash(t, 2, 3);
+        pattern_column_flash(t, x, y);
         break;
     case HEAT_MAP:
+        pattern_heat_map(x, y);
         break;
-    case SNAKE:
+    case CHRISTMAS:
+        pattern_christmas(x, y);
         break;
     default:
         break;
