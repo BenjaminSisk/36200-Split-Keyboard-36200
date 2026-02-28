@@ -6,12 +6,12 @@ PicoJoystick::PicoJoystick()
     /*testing: 
      * - pin_x = 40, adc_ch_x = 0
      * - pin_y = 41, adc_ch_y = 1
-     * - pin_sw = 38
-     * - swap_xy = true, invert_x = false, invert_y = false
+     * - pin_sw = 42
+     * - swap_xy = true, invert_x = true, invert_y = false
      * - timer_interval_ms = -10 (negative for exact delay between executions)
      * - ema_alpha = 0.2 (moderate smoothing)
      */
-    : PicoJoystick(40, 0, 41, 1, 38, {true, false, false}, -10, 0.2f) {}
+    : PicoJoystick(40, 0, 41, 1, 42, {true, true, false}, -10, 0.2f) {}
 
 // Parameterized Constructor
 PicoJoystick::PicoJoystick(uint8_t pin_x, uint8_t adc_ch_x, 
