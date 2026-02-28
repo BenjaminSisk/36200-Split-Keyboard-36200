@@ -9,63 +9,33 @@ struct Coord
     int col;
 };
 
-static std::map<char, Coord> leftHandGrid = {
+static std::map<int, Coord> keymap = {
     // Row 0 (Numbers/Tilde)
-    {'`', {0, 0}},
-    {'1', {0, 1}},
-    {'2', {0, 2}},
-    {'3', {0, 3}},
-    {'4', {0, 4}},
-    {'5', {0, 5}},
+    {0, {0, 0}},
+    {1, {0, 1}},
+    {2, {0, 2}},
+    {3, {0, 3}},
+    {4, {0, 4}},
+    {5, {0, 5}},
     // Row 1 (Tab / Q-T)
-    {'\t', {1, 0}},
-    {'q', {1, 1}},
-    {'w', {1, 2}},
-    {'e', {1, 3}},
-    {'r', {1, 4}},
-    {'t', {1, 5}},
+    {6, {1, 0}},
+    {7, {1, 1}},
+    {8, {1, 2}},
+    {9, {1, 3}},
+    {10, {1, 4}},
+    {11, {1, 5}},
     // Row 2 (A-G)
-    {'a', {2, 1}},
-    {'s', {2, 2}},
-    {'d', {2, 3}},
-    {'f', {2, 4}},
-    {'g', {2, 5}},
+    {12, {2, 1}},
+    {13, {2, 2}},
+    {14, {2, 3}},
+    {15, {2, 4}},
+    {16, {2, 5}},
     // Row 3 (Z-B)
-    {'z', {3, 1}},
-    {'x', {3, 2}},
-    {'c', {3, 3}},
-    {'v', {3, 4}},
-    {'b', {3, 5}}};
-
-static std::map<char, Coord> rightHandGrid = {
-    // Row 0: 6-0, -
-    {'6', {0, 0}},
-    {'7', {0, 1}},
-    {'8', {0, 2}},
-    {'9', {0, 3}},
-    {'0', {0, 4}},
-    {'-', {0, 5}},
-    // Row 1: y, u, i, o, p, [
-    {'y', {1, 0}},
-    {'u', {1, 1}},
-    {'i', {1, 2}},
-    {'o', {1, 3}},
-    {'p', {1, 4}},
-    {'[', {1, 5}},
-    // Row 2: h, j, k, l, ;, '
-    {'h', {2, 0}},
-    {'j', {2, 1}},
-    {'k', {2, 2}},
-    {'l', {2, 3}},
-    {';', {2, 4}},
-    {'\'', {2, 5}},
-    // Row 3: n, m, ,, ., /, Enter
-    {'n', {3, 0}},
-    {'m', {3, 1}},
-    {',', {3, 2}},
-    {'.', {3, 3}},
-    {'/', {3, 4}},
-    {'\r', {3, 5}}};
+    {17, {3, 1}},
+    {18, {3, 2}},
+    {19, {3, 3}},
+    {20, {3, 4}},
+    {21, {3, 5}}};
 
 void main1()
 {
@@ -80,8 +50,8 @@ void main1()
         strips[i].set_instance(i, &(strips[i]));
         printf("Instance pointer set to: %p\n", (void *)&(strips[i]));
 
-        strips[i].set_base_color(255, 255, 255);
-        strips[i].set_pattern_mode(RAINBOW_CYCLE);
+        strips[i].set_base_color(0, 255, 0);
+        strips[i].set_pattern_mode(HEAT_MAP);
 
         strips[i].init_pio();
         strips[i].init_dma();
@@ -96,19 +66,16 @@ void main1()
     {
         if (multicore_fifo_rvalid())
         {
+
             uint32_t key_press = multicore_fifo_pop_blocking();
-            char key = (int)tolower(key_press);
             struct Coord pos = {-1, -1};
-            if (leftHandGrid.count(key))
+            if (keymap.count(key_press))
             {
-                pos = leftHandGrid[key];
-            }
-            if (rightHandGrid.count(key))
-            {
-                pos = rightHandGrid[key];
+                pos = keymap[key_press];
             }
             strips[0].x = pos.col;
             strips[0].y = pos.row;
+            // printf("read keypress: (%d, %d)\n", pos.row, pos.col);
         }
         strips[0].update();
         target = delayed_by_us(get_absolute_time(), 100);
@@ -116,46 +83,6 @@ void main1()
         {
             tight_loop_contents();
         }
-
-        // strip.set_pattern_mode(COMET);
-        // target = delayed_by_ms(get_absolute_time(), 5000);
-        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
-        // {
-        //     // Do nothing, just keep the CPU cycling
-        //     tight_loop_contents();
-        // }
-
-        // strip.set_pattern_mode(RAINBOW_CYCLE);
-        // target = delayed_by_ms(get_absolute_time(), 10000);
-        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
-        // {
-        //     // Do nothing, just keep the CPU cycling
-        //     tight_loop_contents();
-        // }
-
-        // strip.set_pattern_mode(TRAVELING_RAINBOW);
-        // target = delayed_by_ms(get_absolute_time(), 10000);
-        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
-        // {
-        //     // Do nothing, just keep the CPU cycling
-        //     tight_loop_contents();
-        // }
-
-        // strip.set_pattern_mode(RIPPLE);
-        // target = delayed_by_ms(get_absolute_time(), 1000);
-        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
-        // {
-        //     // Do nothing, just keep the CPU cycling
-        //     tight_loop_contents();
-        // }
-
-        // strip.set_pattern_mode(COLUMN_FLASH);
-        // target = delayed_by_ms(get_absolute_time(), 1000);
-        // while (absolute_time_diff_us(get_absolute_time(), target) > 0)
-        // {
-        //     // Do nothing, just keep the CPU cycling
-        //     tight_loop_contents();
-        // }
     }
 }
 
@@ -166,6 +93,24 @@ extern "C" int main()
     sleep_ms(500);
 
     multicore_launch_core1(main1);
+    sleep_ms(10);
+    printf("launched core1\n");
+
+    sleep_ms(1000);
+
+    for (;;)
+    {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        std::uniform_int_distribution<int> dist0(0, 21);
+
+        uint32_t random_number = dist0(gen);
+
+        multicore_fifo_push_blocking(random_number);
+        printf("pushed %d\n", (int)random_number);
+        sleep_ms(50);
+    }
 
     return 0;
 }

@@ -24,5 +24,5 @@ typedef enum mode
     RIPPLE,
     COLUMN_FLASH,
     HEAT_MAP,
-    SNAKE,
+    CHRISTMAS,
 } mode_type;
