@@ -1,4 +1,4 @@
-// Padded and checksummed version of: C:\Users\benji\Documents\ECE362\36200-Split-Keyboard-36200\.pio\build\proton\boot2.bin
+// Padded and checksummed version of: C:\Users\RichardLi\MainFolder\Purdue\2025_sophomoreyear\ECE36200\FinalProject\SplitKeyboard362\.pio\build\proton\boot2.bin
 
 .cpu cortex-m0plus
 .thumb
