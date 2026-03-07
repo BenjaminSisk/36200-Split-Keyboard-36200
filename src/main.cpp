@@ -37,8 +37,9 @@ static std::map<int, Coord> keymap = {
     {20, {3, 4}},
     {21, {3, 5}}};
 
-void main1()
+extern "C" int main()
 {
+    stdio_init_all();
     init_led();
     led_strip strips[NUM_STRIPS];
     printf("Starting initialization...\n");
@@ -51,7 +52,7 @@ void main1()
         printf("Instance pointer set to: %p\n", (void *)&(strips[i]));
 
         strips[i].set_base_color(0, 255, 0);
-        strips[i].set_pattern_mode(HEAT_MAP);
+        strips[i].set_pattern_mode(RAINBOW_CYCLE);
 
         strips[i].init_pio();
         strips[i].init_dma();
@@ -84,33 +85,35 @@ void main1()
             tight_loop_contents();
         }
     }
-}
-
-extern "C" int main()
-{
-    stdio_init_all();
-
-    sleep_ms(500);
-
-    multicore_launch_core1(main1);
-    sleep_ms(10);
-    printf("launched core1\n");
-
-    sleep_ms(1000);
-
-    for (;;)
-    {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-
-        std::uniform_int_distribution<int> dist0(0, 21);
-
-        uint32_t random_number = dist0(gen);
-
-        multicore_fifo_push_blocking(random_number);
-        printf("pushed %d\n", (int)random_number);
-        sleep_ms(50);
-    }
 
     return 0;
 }
+
+// extern "C" int main1()
+// {
+//     stdio_init_all();
+
+//     sleep_ms(500);
+
+//     multicore_launch_core1(main1);
+//     sleep_ms(10);
+//     printf("launched core1\n");
+
+//     sleep_ms(1000);
+
+//     for (;;)
+//     {
+//         std::random_device rd;
+//         std::mt19937 gen(rd());
+
+//         std::uniform_int_distribution<int> dist0(0, 21);
+
+//         uint32_t random_number = dist0(gen);
+
+//         multicore_fifo_push_blocking(random_number);
+//         printf("pushed %d\n", (int)random_number);
+//         sleep_ms(50);
+//     }
+
+//     return 0;
+// }

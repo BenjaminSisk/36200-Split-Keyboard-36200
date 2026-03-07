@@ -11,4 +11,4 @@
 extern "C" int main();
 
 /// @brief main core 1
-void main1();
+extern "C" int main1();
