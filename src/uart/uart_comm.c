@@ -54,7 +54,7 @@ void on_uart0_rx() {
     uint8_t data;
     if (try_read_uart(UART_ID0, &data)) {
         last_valid_byte = data;
-        uart_putc(UART_ID1, data); // Pass valid data through to UART 1
+        //uart_putc(UART_ID1, data); // Pass valid data through to UART 1
     }
 }
 
@@ -63,8 +63,8 @@ void on_uart1_rx() {
     uint8_t data;
     if (try_read_uart(UART_ID1, &data)) {
         last_valid_byte = data;
-        uart_putc(UART_ID0, data);
-        uart_putc(UART_ID1, data); // Pass valid data through to UART 0
+        //uart_putc(UART_ID0, data);
+        //uart_putc(UART_ID1, data); // Pass valid data through to UART 0
     }
 }
 
