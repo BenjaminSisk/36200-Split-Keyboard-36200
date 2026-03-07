@@ -5,13 +5,15 @@
 #include "hardware/adc.h"
 #include "hardware/timer.h"
 
-struct JoystickTransformConfig {
-    bool swap_xy;   
-    bool invert_x;  
-    bool invert_y;  
+struct JoystickTransformConfig
+{
+    bool swap_xy;
+    bool invert_x;
+    bool invert_y;
 };
 
-class PicoJoystick {
+class PicoJoystick
+{
 private:
     // Hardware mappings
     uint8_t pin_x;
@@ -44,9 +46,9 @@ public:
     PicoJoystick();
 
     // Parameterized Constructor
-    PicoJoystick(uint8_t pin_x, uint8_t adc_ch_x, 
-                 uint8_t pin_y, uint8_t adc_ch_y, 
-                 uint8_t pin_sw, 
+    PicoJoystick(uint8_t pin_x, uint8_t adc_ch_x,
+                 uint8_t pin_y, uint8_t adc_ch_y,
+                 uint8_t pin_sw,
                  JoystickTransformConfig config,
                  int32_t timer_interval_ms,
                  float ema_alpha);
@@ -54,7 +56,7 @@ public:
     void init();
     void startTimer();
     void update(); // Now meant to be called by the IRQ
-    
+
     void debugPrintSingleLine() const;
 
     // Getters
