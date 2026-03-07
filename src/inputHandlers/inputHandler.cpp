@@ -19,24 +19,24 @@ InputHandler::InputHandler(KeypadButtons& keypad, PicoJoystick& leftJoy, PicoJoy
 }
 
 void InputHandler::update() {
-    printf("[DEBUG] InputHandler Update Cycle Started\n"); // debug
+    // printf("[DEBUG] InputHandler Update Cycle Started\n"); // debug
 
     // 1. Non-blocking poll of the digital keyboard matrix
-    printf("[DEBUG] Polling Keypad Matrix...\n"); // debug
+    // printf("[DEBUG] Polling Keypad Matrix...\n"); // debug
     matrixRef.update();
 
     // 2. Non-blocking poll of analog joysticks
-    printf("[DEBUG] Polling Joysticks...\n"); // debug
+    // printf("[DEBUG] Polling Joysticks...\n"); // debug
     leftJoyRef.update();
     rightJoyRef.update();
 
-    printf("[DEBUG] Fetching Joystick States...\n"); // debug
+    // printf("[DEBUG] Fetching Joystick States...\n"); // debug
     uint8_t currentLeftX = leftJoyRef.getX();
     uint8_t currentLeftY = leftJoyRef.getY();
     uint8_t currentRightX = rightJoyRef.getX();
     uint8_t currentRightY = rightJoyRef.getY();
-    printf("[DEBUG] Joystick States - LeftX: %d, LeftY: %d, RightX: %d, RightY: %d\n", 
-            currentLeftX, currentLeftY, currentRightX, currentRightY); // debug
+    // printf("[DEBUG] Joystick States - LeftX: %d, LeftY: %d, RightX: %d, RightY: %d\n", 
+    //         currentLeftX, currentLeftY, currentRightX, currentRightY); // debug
 
     // Only dispatch analog data if it has changed (reduces FIFO noise)
     if (currentLeftX != lastLeftX) {

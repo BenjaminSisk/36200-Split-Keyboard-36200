@@ -100,14 +100,14 @@ int main() {
 
     while (true) {
         // High-frequency polling tasks
-        printf("[DEBUG] Main Loop Cycle Started\n"); // debug
+        // printf("[DEBUG] Main Loop Cycle Started\n"); // debug
 
-        printf("[DEBUG] Polling System Inputs...\n"); // debug
+        // printf("[DEBUG] Polling System Inputs...\n"); // debug
         systemInputs.update();
         
         // Listen for user terminal commands non-blockingly
         // THIS IS REQUIRED for your emulator to actually work!
-        printf("[DEBUG] Polling Terminal Emulator...\n"); // debug
+        // printf("[DEBUG] Polling Terminal Emulator...\n"); // debug
         emulator.update();
     }
         

@@ -7,8 +7,8 @@
 class KeypadButtons {
 public:
     // Pass hardware pins via constructor
-    KeypadButtons(const std::vector<uint>& rowPins, const std::vector<uint>& colPins);
-
+    KeypadButtons(const std::vector<uint8_t>& rowPins, const std::vector<uint8_t>& colPins);
+    
     // Default constructor with testing configs. Override with parameterized constructor for production.
     KeypadButtons();
 
@@ -30,9 +30,9 @@ public:
     void simulateState(uint8_t buttonIndex, bool isPressed);
 
 private:
-    std::vector<uint> rows;
-    std::vector<uint> cols;
-    
+    std::vector<uint8_t> rows; // Changed to uint8_t
+    std::vector<uint8_t> cols; // Changed to uint8_t
+
     uint32_t lastUpdateUs;
     const uint32_t SCAN_INTERVAL_US = 5000;   // Scan the whole matrix every 5ms
     const uint8_t DEBOUNCE_THRESHOLD = 4;     // Requires 4 consecutive identical reads (20ms)

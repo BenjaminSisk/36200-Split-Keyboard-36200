@@ -1,9 +1,9 @@
 #include "KeypadButtons/keypadButtons.h"
 #include "config/hardwareMap.h" // Needed ONLY to read NO_PIN
 
-KeypadButtons::KeypadButtons(const std::vector<uint>& rowPins, const std::vector<uint>& colPins) 
+KeypadButtons::KeypadButtons(const std::vector<uint8_t>& rowPins, const std::vector<uint8_t>& colPins) 
     : rows(rowPins), cols(colPins), lastUpdateUs(0) {
-    
+            
     int totalButtons = rows.size() * cols.size();
     validatedState.resize(totalButtons, false);
     debounceCounters.resize(totalButtons, 0);
@@ -64,7 +64,7 @@ void KeypadButtons::update() {
             if (cols[c] == hardwareMap::NO_PIN || rows[r] == hardwareMap::NO_PIN) {
                 continue; 
             }
-            
+
             bool isPressed = gpio_get(rows[r]);
             
             // Calculate the 1D index: (Row * Total Columns) + Col
