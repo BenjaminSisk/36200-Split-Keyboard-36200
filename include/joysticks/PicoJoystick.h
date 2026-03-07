@@ -53,14 +53,29 @@ public:
                  int32_t timer_interval_ms,
                  float ema_alpha);
 
+    /// @brief
     void init();
+
+    /// @brief
     void startTimer();
+
+    /// @brief
     void update(); // Now meant to be called by the IRQ
 
+    /// @brief
     void debugPrintSingleLine() const;
 
     // Getters
+
+    /// @brief
+    /// @return
     uint16_t getX() const { return x_filtered; }
+
+    /// @brief
+    /// @return
     uint16_t getY() const { return y_filtered; }
+
+    /// @brief
+    /// @return
     bool getPressed() const { return is_pressed; }
 };
