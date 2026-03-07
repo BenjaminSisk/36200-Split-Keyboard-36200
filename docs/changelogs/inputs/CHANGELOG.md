@@ -1,4 +1,28 @@
 
+# V0.2
+
+[Unreleased] - 2026-03-06
+Added
+Centralized Hardware Pin Mapping: Added a Pins namespace within hardwareMap.h to define all physical GPIO connections (e.g., LEFT_JOY_SW, KEYBOARD_ROW_PINS) in a single location. WHY: This ensures that if the physical PCB layout changes, you only need to update one configuration file instead of hunting down pin numbers across multiple C++ classes.
+
+Virtual Component Support (NO_PIN): Added a NO_PIN (255) constant to represent unconnected or virtual hardware pins. WHY: This allows the firmware to compile a complete system while gracefully skipping adc_read() or gpio_get() calls for missing components, preventing floating voltages from overwriting simulated states injected by the emulator.
+
+Global Hardware Mutex (stdio_mutex): Introduced a global mutex lock using pico/mutex.h to wrap all printf statements. WHY: Because the RP2350 uses a multicore architecture, Core 0 and Core 1 were simultaneously attempting to write to the USB serial bus, resulting in interleaved, garbled text. The mutex acts as a token, forcing the cores to wait their turn before printing.
+
+Changed
+Hardware Initialization (Board Support Package Pattern): Refactored hardware instantiation out of main.cpp and into a dedicated SystemHardware configuration struct. WHY: Previously, main.cpp was becoming cluttered. Instead of hardcoding hardware strictly inside InputHandler (which traps the data), this Dependency Injection pattern instantiates everything in one clean block and passes references to the subsystems that need them.
+
+Separation of Concerns for KeyMap: Moved KeyMap logic out of the physical KeypadButtons hardware class and into the logical InputEmulators application layer. WHY: Hardware should only care about physical circuit closures (integer IDs), while the application layer should handle the translation to human-readable characters (like QWERTY or specific Markdown triggers).
+
+Terminal Emulator Type Parsing: Updated sscanf parsing in TerminalEmulator::parseCommand() to use standard int variables and %d format specifiers instead of uint8_t and %hhu. WHY: The Pico SDK uses a highly compressed C library (newlib-nano) that strips out support for obscure format specifiers. Using standard integers prevents memory overflow errors during parsing.
+
+Fixed
+Multicore FIFO Lockup (Silent Failure): Fixed an issue where Core 1 appeared frozen by calling init() on the PicoJoystick before the main loop. WHY: Uninitialized ADC pins were reading floating electrical noise, causing the joystick filter to detect constant "movement" and instantly flood the multicore FIFO queue, dropping all legitimate keypad presses.
+
+Terminal Emulator Blind Typing: Added putchar(c) and fflush(stdout) to the TerminalEmulator::update() loop. WHY: The USB serial interface utilizes a line buffer and does not automatically echo keystrokes back to the user's terminal. Manually bouncing the characters and forcing a flush ensures the developer can see what they are typing in real-time.
+
+CRLF Double Execution Bug: Modified the emulator's UART read loop to trigger strictly on Carriage Return (\r) and actively ignore Line Feed (\n). WHY: Standard terminal monitors send both characters sequentially when you press the "Enter" key. Ignoring the \n prevents the emulator from executing the command logic twice and printing duplicate prompt messages.
+
 # V0.1
 
 ## Architecture & Core Philosophy
