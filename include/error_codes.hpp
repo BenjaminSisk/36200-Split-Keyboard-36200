@@ -1,0 +1,28 @@
+#pragma once
+
+typedef enum error
+{
+    SUCCESS = 0,
+    PIO_INIT_ERROR,
+    DMA_INIT_ERROR,
+    TIMER_INIT_ERROR,
+    RESOURCE_CLAIM_ERROR,
+    OUT_OF_MEMORY,
+    DMA_BUSY_TIMEOUT,
+    INVALID_STRIP_INDEX,
+    INVALID_COLOR_DATA,
+    NULL_INSTANCE_ERROR,
+    MODE_NOT_SUPPORTED
+} error_code;
+
+typedef enum mode
+{
+    BREATHING,
+    COMET,
+    RAINBOW_CYCLE,
+    TRAVELING_RAINBOW,
+    RIPPLE,
+    COLUMN_FLASH,
+    HEAT_MAP,
+    CHRISTMAS,
+} mode_type;

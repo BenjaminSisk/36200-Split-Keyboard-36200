@@ -21,7 +21,7 @@
 #define ws2812_T3 4
 
 static const uint16_t ws2812_program_instructions[] = {
-            //     .wrap_target
+    //     .wrap_target
     0x6321, //  0: out    x, 1            side 0 [3]
     0x1223, //  1: jmp    !x, 3           side 1 [2]
     0x1200, //  2: jmp    0               side 1 [2]
@@ -40,7 +40,8 @@ static const struct pio_program ws2812_program = {
 #endif
 };
 
-static inline pio_sm_config ws2812_program_get_default_config(uint offset) {
+static inline pio_sm_config ws2812_program_get_default_config(uint offset)
+{
     pio_sm_config c = pio_get_default_sm_config();
     sm_config_set_wrap(&c, offset + ws2812_wrap_target, offset + ws2812_wrap);
     sm_config_set_sideset(&c, 1, false, false);
@@ -48,7 +49,8 @@ static inline pio_sm_config ws2812_program_get_default_config(uint offset) {
 }
 
 #include "hardware/clocks.h"
-static inline void ws2812_program_init(PIO pio, uint sm, uint offset, uint pin, float freq, bool rgbw) {
+static inline void ws2812_program_init(PIO pio, uint sm, uint offset, uint pin, float freq, bool rgbw)
+{
     pio_gpio_init(pio, pin);
     pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
     pio_sm_config c = ws2812_program_get_default_config(offset);
@@ -77,7 +79,7 @@ static inline void ws2812_program_init(PIO pio, uint sm, uint offset, uint pin, 
 #define ws2812_parallel_T3 4
 
 static const uint16_t ws2812_parallel_program_instructions[] = {
-            //     .wrap_target
+    //     .wrap_target
     0x6020, //  0: out    x, 32
     0xa20b, //  1: mov    pins, ~null            [2]
     0xa201, //  2: mov    pins, x                [2]
@@ -96,15 +98,18 @@ static const struct pio_program ws2812_parallel_program = {
 #endif
 };
 
-static inline pio_sm_config ws2812_parallel_program_get_default_config(uint offset) {
+static inline pio_sm_config ws2812_parallel_program_get_default_config(uint offset)
+{
     pio_sm_config c = pio_get_default_sm_config();
     sm_config_set_wrap(&c, offset + ws2812_parallel_wrap_target, offset + ws2812_parallel_wrap);
     return c;
 }
 
 #include "hardware/clocks.h"
-static inline void ws2812_parallel_program_init(PIO pio, uint sm, uint offset, uint pin_base, uint pin_count, float freq) {
-    for(uint i=pin_base; i<pin_base+pin_count; i++) {
+static inline void ws2812_parallel_program_init(PIO pio, uint sm, uint offset, uint pin_base, uint pin_count, float freq)
+{
+    for (uint i = pin_base; i < pin_base + pin_count; i++)
+    {
         pio_gpio_init(pio, i);
     }
     pio_sm_set_consecutive_pindirs(pio, sm, pin_base, pin_count, true);
@@ -120,4 +125,3 @@ static inline void ws2812_parallel_program_init(PIO pio, uint sm, uint offset, u
 }
 
 #endif
-
