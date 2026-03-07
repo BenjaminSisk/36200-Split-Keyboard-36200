@@ -2,9 +2,13 @@
 
 #define DATAPIN0 25
 #define SPACING 10
+#define LEFT_OR_RIGHT 0 // left = 0, right = 1
 
-// note map.json should be in root directory
-static auto key2led = Key2LED::loadFromJson("map.json");
+#if LEFT_OR_RIGHT == 0
+static auto key2led = Key2LED::loadFromJson("left_keymap.json");
+#else
+static auto key2led = Key2LED::loadFromJson("right_keymap.json");
+#endif
 
 void main1()
 {
@@ -38,7 +42,7 @@ void main1()
         {
             uint32_t key_press = multicore_fifo_pop_blocking();
             uint8_t id = (key_press >> 8) & 0xff;
-            uint8_t action = (key_press) & 0xff;
+            // uint8_t action = (key_press) & 0xff;
             struct Coord pos = {-1, -1};
             if (key2led.count(id))
             {

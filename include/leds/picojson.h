@@ -282,7 +282,7 @@ namespace picojson
 #endif
         )
         {
-            throw std::overflow_error("");
+            assert(!"overflow");
         }
         u_.number_ = n;
     }

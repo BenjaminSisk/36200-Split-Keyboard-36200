@@ -1,10 +1,12 @@
 #ifndef KEYMAP_READER_HPP
 #define KEYMAP_READER_HPP
 
+#define PICOJSON_ASSERT(e) assert(e)
+#include "picojson.h"
+
 #include <map>
 #include <string>
 #include <fstream>
-#include "picojson.h"
 
 struct Coord
 {
