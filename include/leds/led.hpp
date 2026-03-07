@@ -23,6 +23,18 @@
 #include "example_ws2812.pio.h"
 #include "error_codes.hpp"
 
+typedef enum mode
+{
+    BREATHING,
+    COMET,
+    RAINBOW_CYCLE,
+    TRAVELING_RAINBOW,
+    RIPPLE,
+    COLUMN_FLASH,
+    HEAT_MAP,
+    CHRISTMAS,
+} mode_type;
+
 class led_strip
 {
 public:
