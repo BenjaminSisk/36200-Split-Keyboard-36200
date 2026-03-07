@@ -5,6 +5,10 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 #include "hardware/structs/uart.h"
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define UART_ID0 uart0
 #define UART_TX0_PIN 0
