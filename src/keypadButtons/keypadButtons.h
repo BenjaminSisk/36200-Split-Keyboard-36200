@@ -19,6 +19,13 @@ public:
     void setOnKeyPress(std::function<void(uint8_t)> callback);
     void setOnKeyRelease(std::function<void(uint8_t)> callback);
 
+    /**
+     * @brief Manually injects a button state for emulation, bypassing hardware and debounce.
+     * @param buttonIndex The 1D hardware index of the button (0 to N-1).
+     * @param isPressed True for pressed, false for released.
+     */
+    void simulateState(uint8_t buttonIndex, bool isPressed);
+
 private:
     std::vector<uint> rows;
     std::vector<uint> cols;

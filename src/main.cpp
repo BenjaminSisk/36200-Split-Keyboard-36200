@@ -2,8 +2,11 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 
-// Include future subsystems here
-#include "subsystems/joysticks/PicoJoystick.h"
+#include "inputHandler.h"
+#include "inputEmulators/terminalEmulator.h"
+#include "keypadButtons/keypadButtons.h"
+#include "joysticks/PicoJoystick.h"
+
 
 /**
  * @brief Centralized visualizer callback for all active subsystems.
@@ -34,32 +37,60 @@ void debug_visualizer(bool isJoystick, const PicoJoystick& joystick,
     }
 }
 
+
+// --- Core 1 Task ---
+void core1Task() {
+    while (true) {
+        // Block core 1 until data arrives from the handler
+        uint32_t rawData = multicore_fifo_pop_blocking();
+
+        uint8_t equipmentId = (rawData >> 8) & 0xFF;
+        uint8_t actionValue = rawData & 0xFF;
+
+        if (equipmentId < 128) {
+            // It's a keypress! Route it through the QWERTY flash configuration.
+            char mappedChar = qwertyMap::getChar(equipmentId);
+            printf("ID: %d | Char: %c | State: %s\n", 
+                   equipmentId, mappedChar, actionValue ? "PRESSED" : "RELEASED");
+        } else {
+            // It's an analog or peripheral input
+            printf("Analog ID: %d | Value: %d\n", equipmentId, actionValue);
+        }
+    }
+}
+
+#include "pico/stdlib.h"
+#include "pico/multicore.h"
+#include <stdio.h>
+
+
+// ... (core1Task remains exactly the same) ...
+
 int main() {
     stdio_init_all();
-    adc_init();
+    sleep_ms(2000); // Allow USB serial to initialize
 
-    printf("\033[2J"); 
-    printf("System Initialized. Starting IRQs...\n");
+    multicore_launch_core1(core1Task);
 
-    // Instantiate subsystems
-    PicoJoystick joystick;
+    // Instantiate Hardware
+    KeypadButtons physicalKeypad;
+    PicoJoystick leftJoystick; 
     
-    // Rapid testing initialization
-    joystick.testing_QuickInit();
+    // Instantiate Handler and Emulator
+    InputHandler systemInputs(physicalKeypad, leftJoystick);
+    TerminalEmulator emulator(physicalKeypad, leftJoystick);
 
-    // The main loop is now entirely decoupled from sensor polling latency
+    physicalKeypad.init();
+
+    printf("Boot Complete. Type 'k 12 1' to simulate button 12 press.\n");
+
     while (true) {
+        // High-frequency polling tasks
+        systemInputs.update();
         
-        // Call the unified visualizer
-        // Set flags to true to enable specific subsystem terminal output
-        debug_visualizer(true, joystick, false, false, false);
-        
-        sleep_ms(100); 
-
-
-        // This sleep no longer blocks sensor reading!
-        sleep_ms(100); 
+        // Listen for user terminal commands non-blockingly
+        emulator.update();
     }
-    
+
     return 0;
 }

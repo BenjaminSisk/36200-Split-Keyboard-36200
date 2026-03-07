@@ -75,3 +75,11 @@ public:
     uint16_t getY() const { return y_filtered; }
     bool getPressed() const { return is_pressed; }
 };
+
+public:
+    /**
+     * @brief Manually injects X and Y axis values for emulation, bypassing the ADC.
+     * @param x Simulated 8-bit X-axis value (0-255).
+     * @param y Simulated 8-bit Y-axis value (0-255).
+     */
+    void simulatePosition(uint8_t x, uint8_t y);

@@ -4,7 +4,7 @@ If you are an AI assistant (e.g., Cursor, Copilot, Gemini) contributing to this 
 
 ## 1. Architectural Principles
 * **Subsystem Compartmentalization:** Actively developed hardware and communication features live in `src/subsystems/`. Keep hardware-specific includes and state contained within their respective subsystem classes. Do not leak SDK headers into `src/main.cpp` unless required for system-wide initialization.
-* **Low-Level Precision:** Prefer register-level configuration or direct SDK functions where execution speed is critical. Utilize hardware features like DMA or hardware interrupts (IRQs) for high-frequency tasks (like sensor polling) rather than blocking the main CPU loop.
+* **Low-Level Precision:** Prefer register-level configuration or direct SDK functions where execution speed is critical. Utilize hardware features like DMA or hardware interrupts (IRQs) for high-frequency tasks (like sensor polling) rather than blocking the main CPU loop.ke
 * **Non-Blocking Logic:** The main loop must never be blocked. Do not use `sleep_ms()` outside of top-level system delays. Use state machines, hardware timers, and PIO for asynchronous operations.
 
 ## 2. Code Formatting & Syntax

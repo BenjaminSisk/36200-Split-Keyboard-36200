@@ -85,3 +85,18 @@ void KeypadButtons::setOnKeyPress(std::function<void(uint8_t)> callback) {
 void KeypadButtons::setOnKeyRelease(std::function<void(uint8_t)> callback) {
     onKeyReleaseCb = callback;
 }
+
+void KeypadButtons::simulateState(uint8_t buttonIndex, bool isPressed) {
+    if (buttonIndex >= validatedState.size()) return;
+
+    // Only fire if the simulated state differs from the current validated state
+    if (validatedState[buttonIndex] != isPressed) {
+        validatedState[buttonIndex] = isPressed;
+        
+        if (isPressed && onKeyPressCb) {
+            onKeyPressCb(buttonIndex);
+        } else if (!isPressed && onKeyReleaseCb) {
+            onKeyReleaseCb(buttonIndex);
+        }
+    }
+}
