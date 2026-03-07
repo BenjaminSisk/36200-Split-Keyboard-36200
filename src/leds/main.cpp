@@ -52,7 +52,7 @@ void main1()
         printf("Instance pointer set to: %p\n", (void *)&(strips[i]));
 
         strips[i].set_base_color(0, 255, 0);
-        strips[i].set_pattern_mode(RAINBOW_CYCLE);
+        strips[i].set_pattern_mode(COMET);
 
         strips[i].init_pio();
         strips[i].init_dma();
