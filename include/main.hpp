@@ -8,6 +8,7 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "PicoJoystick.h"
+#include "uart_comm.h"
 
 /// @brief main core 1
 void main1();

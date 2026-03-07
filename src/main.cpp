@@ -90,7 +90,8 @@ void main1()
 int main()
 {
     stdio_init_all();
-
+    init_uart_pins();
+    init_uart_isr();
     multicore_launch_core1(main1);
 
     adc_init();
