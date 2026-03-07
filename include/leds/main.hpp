@@ -7,7 +7,7 @@
 #include "patterns.hpp"
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
-#include "subsystems/joysticks/PicoJoystick.h"
+#include "PicoJoystick.h"
 
 /// @brief main core 1
 void main1();
