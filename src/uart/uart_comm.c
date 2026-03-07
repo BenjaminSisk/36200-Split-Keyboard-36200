@@ -1,0 +1,83 @@
+#include "uart_comm.h"
+#include <stdio.h>
+
+volatile uint32_t parity_error_count = 0;
+volatile uint8_t last_valid_byte = 0;
+
+void init_uart_pins() {
+   
+    uart_init(UART_ID0, BAUD_RATE);
+    gpio_set_function(UART_TX0_PIN, UART_FUNCSEL_NUM(UART_ID0, UART_TX0_PIN));
+    gpio_set_function(UART_RX0_PIN, UART_FUNCSEL_NUM(UART_ID0, UART_RX0_PIN));
+    
+    
+    uart_set_format(UART_ID0, 8, 1, UART_PARITY_EVEN);
+   
+    uart_set_fifo_enabled(UART_ID0, false);
+
+   
+    uart_init(UART_ID1, BAUD_RATE);
+    gpio_set_function(UART_TX1_PIN, UART_FUNCSEL_NUM(UART_ID1, UART_TX1_PIN));
+    gpio_set_function(UART_RX1_PIN, UART_FUNCSEL_NUM(UART_ID1, UART_RX1_PIN));
+    
+    
+    uart_set_format(UART_ID1, 8, 1, UART_PARITY_EVEN);
+    uart_set_fifo_enabled(UART_ID1, false);
+}
+
+/**
+ * Checks for hardware errors before returning the byte.
+ * Returns true if data is valid, false if parity/framing error occurred.
+ */
+bool try_read_uart(uart_inst_t *uart, uint8_t *dest) {
+    uart_hw_t *hw = uart_get_hw(uart);
+
+    // Check Receive Status Register (RSR) for Parity Error (PE) or Framing Error (FE)
+    if (hw->rsr & (UART_UARTRSR_PE_BITS | UART_UARTRSR_FE_BITS)) {
+        parity_error_count++;
+        hw->rsr = 0;           // Clear the error bits in the hardware
+        (void)uart_getc(uart); // Read and discard the corrupt byte from the FIFO
+        return false; 
+    }
+
+    // If no errors and data is available, read it
+    if (uart_is_readable(uart)) {
+        *dest = uart_getc(uart);
+        return true;
+    }
+    
+    return false;
+}
+
+// ISR for UART 0 (Manager)
+void on_uart0_rx() {
+    uint8_t data;
+    if (try_read_uart(UART_ID0, &data)) {
+        last_valid_byte = data;
+        uart_putc(UART_ID1, data); // Pass valid data through to UART 1
+    }
+}
+
+// ISR for UART 1 (Subordinate)
+void on_uart1_rx() {
+    uint8_t data;
+    if (try_read_uart(UART_ID1, &data)) {
+        last_valid_byte = data;
+        uart_putc(UART_ID0, data);
+        uart_putc(UART_ID1, data); // Pass valid data through to UART 0
+    }
+}
+
+void init_uart_isr() {
+    // --- UART 0 Interrupt setup ---
+    irq_set_exclusive_handler(UART0_IRQ, on_uart0_rx);
+    irq_set_enabled(UART0_IRQ, true);
+    // Enable the RX interrupt
+    uart_set_irqs_enabled(UART_ID0, true, false);
+
+    // --- UART 1 Interrupt setup ---
+    irq_set_exclusive_handler(UART1_IRQ, on_uart1_rx);
+    irq_set_enabled(UART1_IRQ, true);
+    // Enable the RX interrupt
+    uart_set_irqs_enabled(UART_ID1, true, false);
+}
