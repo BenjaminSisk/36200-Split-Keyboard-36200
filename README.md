@@ -2,6 +2,12 @@
 
 A modular, C++ based firmware for an RP2350-powered split keyboard. This project integrates multiple hardware subsystems into a unified, non-blocking architecture.
 
+## Diagrams
+
+Here is a link to the [diagrams](https://drive.google.com/file/d/1josPRPToi0hVMcOZqZrqSURNXhiCR-l0/view?usp=sharing).
+
+For more information, see the the [docs](./docs) directory.
+
 ## Features
 
 - **ADC Joystick Interface:** Configurable, math-driven transformation pipeline with an integrated Exponential Moving Average (EMA) filter for noise reduction.
