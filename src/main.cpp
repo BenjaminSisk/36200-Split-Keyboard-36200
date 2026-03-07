@@ -37,7 +37,7 @@ static std::map<int, Coord> keymap = {
     {20, {3, 4}},
     {21, {3, 5}}};
 
-extern "C" int main()
+void main1()
 {
     stdio_init_all();
     init_led();
@@ -85,64 +85,35 @@ extern "C" int main()
             tight_loop_contents();
         }
     }
-
-    return 0;
 }
 
-// extern "C" int main1()
-// {
-//     stdio_init_all();
-
-//     sleep_ms(500);
-
-//     multicore_launch_core1(main1);
-//     sleep_ms(10);
-//     printf("launched core1\n");
-
-//     sleep_ms(1000);
-
-//     for (;;)
-//     {
-//         std::random_device rd;
-//         std::mt19937 gen(rd());
-
-//         std::uniform_int_distribution<int> dist0(0, 21);
-
-//         uint32_t random_number = dist0(gen);
-
-//         multicore_fifo_push_blocking(random_number);
-//         printf("pushed %d\n", (int)random_number);
-//         sleep_ms(50);
-//     }
-
-//     return 0;
-// }#include <stdio.h>
-#include "pico/stdlib.h"
-#include "hardware/adc.h"
-#include "subsystems/joysticks/PicoJoystick.h"
-
-int main() {
+int main()
+{
     stdio_init_all();
+
+    multicore_launch_core1(main1);
+
     adc_init();
 
-    printf("\033[2J"); 
+    printf("\033[2J");
     printf("System Initialized. Starting IRQs...\n");
 
     // Initialize using constructor delegation defaults
     PicoJoystick joystick;
     joystick.init();
-    
+
     // Fire up the hardware timer IRQ
     joystick.startTimer();
 
     // The main loop is now entirely decoupled from sensor polling latency
-    while (true) {
+    while (true)
+    {
         // Output visualization using the filtered data
         joystick.debugPrintSingleLine();
-        
+
         // This sleep no longer blocks sensor reading!
-        sleep_ms(100); 
+        sleep_ms(100);
     }
-    
+
     return 0;
 }

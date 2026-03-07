@@ -5,10 +5,11 @@
 
 #include "led.hpp"
 #include "patterns.hpp"
-
-/// @brief main core 0
-/// @return
-extern "C" int main();
+#include "pico/stdlib.h"
+#include "hardware/adc.h"
+#include "subsystems/joysticks/PicoJoystick.h"
 
 /// @brief main core 1
-extern "C" int main1();
+void main1();
+
+int main();
