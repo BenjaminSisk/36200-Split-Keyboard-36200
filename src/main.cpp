@@ -2,10 +2,10 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 
-#include "inputHandler.h"
-#include "inputEmulators/terminalEmulator.h"
-#include "keypadButtons/keypadButtons.h"
-#include "joysticks/PicoJoystick.h"
+#include "InputHandlers/inputHandler.h"
+#include "InputEmulators/terminalEmulator.h"
+#include "KeypadButtons/keypadButtons.h"
+#include "Joysticks/PicoJoystick.h"
 
 
 /**

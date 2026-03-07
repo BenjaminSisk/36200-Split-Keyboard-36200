@@ -1,4 +1,4 @@
-#include "inputHandler.h"
+#include "InputHandlers/inputHandler.h"
 
 static KeypadButtons defaultKeypad;
 static PicoJoystick defaultLeftJoy; // Assuming PicoJoystick exists in your joysticks folder

@@ -4,11 +4,7 @@ This document defines the architectural standards for creating and integrating n
 
 ## 1. File Structure & Naming Conventions
 
-All actively developed subsystems must reside in their own dedicated directory within `src/subsystems/`.
-
-* Create a new folder for the subsystem: `src/subsystems/<module_name>/`
-* Use PascalCase for class files: `ModuleName.h` and `ModuleName.cpp`
-* Keep all hardware-specific SDK includes (e.g., `hardware/pio.h`, `hardware/timer.h`) completely encapsulated within the subsystem's header or source files. Do not leak them into `main.cpp`.
+All actively developed subsystems must reside in their own dedicated directory within `src/`.
 
 ## 2. Class Architecture Standards
 
@@ -26,35 +22,8 @@ Implement the following methods in your public interface.
 | Method | Purpose | Notes |
 | :--- | :--- | :--- |
 | `init()` | Initializes GPIO, PIO, or ADC hardware pins. | Called once before the main loop. |
-| `startTimer()` | Registers the hardware timer IRQ for the subsystem. | Required if the subsystem relies on non-blocking background polling. |
-| `testing_QuickInit()` | Wrapper that sequentially calls `init()` and `startTimer()`. | Used for rapid prototyping and testing in `main.cpp`. |
-| `update()` | Contains the core logic to read sensors, update state, or write to hardware. | Should be called exclusively by the timer IRQ callback, not the main loop. |
-| `debugPrint()` | A unified wrapper that outputs the subsystem's state to the terminal. | Must flush `stdout`. Use `\r` for single-line overwrite or ANSI codes for multi-line. |
+| `debugPrint()` | A unified wrapper that outputs the subsystem's state to the terminal. | Must flush `stdout` |
 
-## 3. Implementation Example (Header)
-
-```cpp
-#pragma once
-#include "pico/stdlib.h"
-
-class ExampleSubsystem {
-private:
-    uint8_t status_pin;
-    struct repeating_timer timer;
-    static bool timerCallback(struct repeating_timer *t);
-
-public:
-    ExampleSubsystem(); // Delegates to parameterized
-    ExampleSubsystem(uint8_t pin); 
-
-    void init();
-    void startTimer();
-    void testing_QuickInit();
-    void update();
-    void debugPrint() const;
-};
-
-```
 
 ## 4. Integration with `main.cpp`
 

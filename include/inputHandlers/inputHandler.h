@@ -1,8 +1,8 @@
 #pragma once
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
-#include "keypadButtons/keypadButtons.h"
-#include "joysticks/PicoJoystick.h"
+#include "KeypadButtons/keypadButtons.h"
+#include "Joysticks/PicoJoystick.h"
 #include "config/hardwareMap.h"
 #include <cstdint>
 

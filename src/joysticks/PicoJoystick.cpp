@@ -1,4 +1,4 @@
-#include "PicoJoystick.h"
+#include "Joysticks/PicoJoystick.h"
 #include <stdio.h>
 
 // Constructor Delegation: Default calls Parameterized
