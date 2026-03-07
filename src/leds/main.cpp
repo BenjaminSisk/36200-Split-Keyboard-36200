@@ -9,6 +9,18 @@ struct Coord
     int col;
 };
 
+typedef enum mode
+{
+    BREATHING,
+    COMET,
+    RAINBOW_CYCLE,
+    TRAVELING_RAINBOW,
+    RIPPLE,
+    COLUMN_FLASH,
+    HEAT_MAP,
+    CHRISTMAS,
+} mode_type;
+
 static std::map<int, Coord> keymap = {
     // Row 0 (Numbers/Tilde)
     {0, {0, 0}},
