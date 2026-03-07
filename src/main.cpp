@@ -3,7 +3,8 @@
 #define DATAPIN0 25
 #define SPACING 10
 
-auto keymap = KeyMapReader::loadFromJson("map.json");
+// note map.json should be in root directory
+static auto key2led = Key2LED::loadFromJson("map.json");
 
 void main1()
 {
@@ -36,10 +37,12 @@ void main1()
         if (multicore_fifo_rvalid())
         {
             uint32_t key_press = multicore_fifo_pop_blocking();
+            uint8_t id = (key_press >> 8) & 0xff;
+            uint8_t action = (key_press) & 0xff;
             struct Coord pos = {-1, -1};
-            if (keymap.count(key_press))
+            if (key2led.count(id))
             {
-                pos = keymap[key_press];
+                pos = key2led[id];
             }
             strips[0].x = pos.col;
             strips[0].y = pos.row;
@@ -57,6 +60,7 @@ void main1()
 int main()
 {
     stdio_init_all();
+    sleep_ms(500);
     multicore_launch_core1(main1);
 
     adc_init();

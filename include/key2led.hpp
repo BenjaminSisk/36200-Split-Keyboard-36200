@@ -12,7 +12,7 @@ struct Coord
     int col;
 };
 
-class KeyMapReader
+class Key2LED
 {
 public:
     /// @brief converts map.json into keymap

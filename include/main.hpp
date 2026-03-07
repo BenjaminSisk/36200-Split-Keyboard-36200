@@ -9,9 +9,11 @@
 #include "hardware/adc.h"
 #include "PicoJoystick.h"
 #include "uart_comm.h"
-#include "keymap_reader.hpp"
+#include "key2led.hpp"
 
 /// @brief main core 1
 void main1();
 
+/// @brief main core 0
+/// @return 0
 int main();
