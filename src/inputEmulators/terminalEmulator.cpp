@@ -1,20 +1,39 @@
 #include "terminalEmulator.h"
+#include "config/systemMutex.h"
 
 TerminalEmulator::TerminalEmulator(KeypadButtons& keypad, PicoJoystick& joystick)
     : keypadRef(keypad), joystickRef(joystick) {}
 
 void TerminalEmulator::update() {
+ 
+    // 1. Print the prompt if the state flag allows it
+    if (isUserNeedsPrompt) {
+        mutex_enter_blocking(&stdio_mutex); // Grab the stick
+        printf("enter input: ");
+        fflush(stdout); // Force it to the screen immediately
+        mutex_exit(&stdio_mutex); // Release the stick
+        isUserNeedsPrompt = false;// Lock the prompt so it doesn't spam the lo
+    }
+    
+    //get user input: 
+
     // Non-blocking read from stdio (UART/USB Serial)
     int c = getchar_timeout_us(0); //
 
     if (c != PICO_ERROR_TIMEOUT) { //
         // 1. Handle Enter/Return keys
-        if (c == '\n' || c == '\r') { //
+        if (c == '\r') {
+            return; // Ignore carriage return, wait for newline (some terminals send \r\n)
+        }
+        if (c == '\n') { //
             if (!rxBuffer.empty()) { //
                 printf("\n"); // Echo the newline to move cursor down
                 parseCommand(); //
                 rxBuffer.clear(); // Reset buffer after execution
             }
+
+            // 2. The command is finished. Request a new prompt for the next loop.
+            isUserNeedsPrompt = true;
         } 
         // 2. Handle Backspace (ASCII 8 or 127 depending on terminal)
         else if (c == '\b' || c == 127) {

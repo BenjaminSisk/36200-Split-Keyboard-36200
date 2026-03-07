@@ -30,4 +30,9 @@ private:
      * @brief Parses the completed command string and executes the simulation.
      */
     void parseCommand();
+
+
+    //flag: if true, prints out a waiting for user input message. 
+    // else (most cases), do not print. 
+    bool isUserNeedsPrompt = true;
 };

@@ -42,6 +42,9 @@ void debug_visualizer(bool isJoystick, const PicoJoystick& joystick,
     }
 }
 
+// 1. Actually define the lock in memory here
+//purpose: print statements from multiple cores without interleaving characters
+mutex_t stdio_mutex;
 
 // --- Core 1 Task ---
 void core1Task() {
@@ -51,11 +54,16 @@ void core1Task() {
         // Block core 1 until data arrives from the handler
         uint32_t rawData = multicore_fifo_pop_blocking();
 
-        printf("[DEBUG] Core 1 popped raw data: %lu\n", rawData); //debug
+
+    
+        // printf("[DEBUG] Core 1 popped raw data: %lu\n", rawData); //debug
 
         uint8_t equipmentId = (rawData >> 8) & 0xFF;
         uint8_t actionValue = rawData & 0xFF;
 
+        //debugging:
+        // 2. Grab the talking stick. Block if Core 0 is currently using it.
+        mutex_enter_blocking(&stdio_mutex);
         if (equipmentId < 128) {
             // It's a keypress! Route it through the QWERTY flash configuration.
             char mappedChar = qwertyMap::getChar(equipmentId);
@@ -65,6 +73,8 @@ void core1Task() {
             // It's an analog or peripheral input
             printf("Analog ID: %d | Value: %d\n", equipmentId, actionValue);
         }
+        // 3. Put the talking stick down so Core 0 can print again
+        mutex_exit(&stdio_mutex);
     }
 }
 
@@ -90,6 +100,10 @@ int main() {
     InputHandler systemInputs(hw.keypad, hw.leftJoy, hw.rightJoy);
     TerminalEmulator emulator(hw.keypad, hw.leftJoy);
 
+
+    //mutlicore:
+    // 4. Initialize the hardware lock BEFORE launching Core 1
+    mutex_init(&stdio_mutex);
     // 3. Launch Core 1 LAST to prevent printf race conditions
     printf("Launching Core 1 Task...\n");
     multicore_launch_core1(core1Task);
