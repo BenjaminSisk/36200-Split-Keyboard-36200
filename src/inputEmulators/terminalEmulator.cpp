@@ -1,4 +1,4 @@
-#include "InputEmulators/terminalEmulator.h"
+#include "terminalEmulator.h"
 
 TerminalEmulator::TerminalEmulator(KeypadButtons& keypad, PicoJoystick& joystick)
     : keypadRef(keypad), joystickRef(joystick) {}

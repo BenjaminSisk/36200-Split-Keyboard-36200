@@ -18,9 +18,9 @@ public:
      * @brief Parameterized constructor associating the handler with specific physical hardware interfaces.
      * @param keypad Reference to the primary keypad scanning subsystem.
      * @param leftJoy Reference to the left joystick subsystem.
+     * @param rightJoy Reference to the right joystick subsystem.
      */
-    InputHandler(KeypadButtons& keypad, PicoJoystick& leftJoy);
-
+    InputHandler(KeypadButtons& keypad, PicoJoystick& leftJoy, PicoJoystick& rightJoy);
     /**
      * @brief Polls all active input peripherals and processes data non-blockingly.
      * Must be called continuously in the main execution loop.
@@ -30,10 +30,13 @@ public:
 private:
     KeypadButtons& matrixRef;
     PicoJoystick& leftJoyRef;
+    PicoJoystick& rightJoyRef;
 
     // State tracking to prevent sending duplicate analog data
     uint8_t lastLeftX = 0;
     uint8_t lastLeftY = 0;
+    uint8_t lastRightX = 0;
+    uint8_t lastRightY = 0;
 
     /**
      * @brief Callback invoked by the matrix scanner when a button is pressed.

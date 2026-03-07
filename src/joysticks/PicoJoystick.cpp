@@ -1,4 +1,4 @@
-#include "Joysticks/PicoJoystick.h"
+#include "PicoJoystick.h"
 #include <stdio.h>
 
 // Constructor Delegation: Default calls Parameterized
@@ -55,6 +55,12 @@ void PicoJoystick::applyEMA(uint16_t current_x, uint16_t current_y) {
 }
 
 void PicoJoystick::update() {
+    // GUARD: If this is a virtual joystick (NO_PIN), skip hardware reads.
+    // This allows the TerminalEmulator's simulated values to persist!
+    if (pin_x == hardwareMap::NO_PIN || pin_y == hardwareMap::NO_PIN) {
+        return; 
+    }
+
     adc_select_input(adc_ch_x);
     uint16_t current_x = adc_read();
 
@@ -136,4 +142,9 @@ void PicoJoystick::testing_QuickInit() {
 
 void PicoJoystick::debugPrint() const {
     debugPrintSingleLine();
+}
+
+
+void PicoJoystick::simulatePosition(uint8_t x, uint8_t y) {
+    printf("[DEBUG] Simulating Joystick Position. X: %d, Y: %d\n", x, y);
 }

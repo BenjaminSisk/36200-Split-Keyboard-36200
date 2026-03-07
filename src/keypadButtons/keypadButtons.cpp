@@ -1,4 +1,5 @@
 #include "KeypadButtons/keypadButtons.h"
+#include "config/hardwareMap.h" // Needed ONLY to read NO_PIN
 
 KeypadButtons::KeypadButtons(const std::vector<uint>& rowPins, const std::vector<uint>& colPins) 
     : rows(rowPins), cols(colPins), lastUpdateUs(0) {
@@ -8,9 +9,12 @@ KeypadButtons::KeypadButtons(const std::vector<uint>& rowPins, const std::vector
     debounceCounters.resize(totalButtons, 0);
 }
 
+KeypadButtons::KeypadButtons() : KeypadButtons({2, 3, 4, 5}, {6, 7, 8}) {}
+
 void KeypadButtons::init() {
     // Initialize Rows (Horizontal) as Inputs with Pull-Downs
     for (uint pin : rows) {
+        if (pin == hardwareMap::NO_PIN) continue; // Skip virtual rows
         gpio_init(pin);
         gpio_set_dir(pin, GPIO_IN);
         gpio_pull_down(pin); // Keeps the pin at logic 0 when no button is pressed
@@ -18,10 +22,12 @@ void KeypadButtons::init() {
 
     // Initialize Columns (Vertical) as Outputs, driven low initially
     for (uint pin : cols) {
+        if (pin == hardwareMap::NO_PIN) continue; // Skip virtual cols
         gpio_init(pin);
         gpio_set_dir(pin, GPIO_OUT);
         gpio_put(pin, 0);
     }
+
 }
 
 void KeypadButtons::update() {
@@ -37,6 +43,13 @@ void KeypadButtons::update() {
 
     // Scan through each column
     for (size_t c = 0; c < cols.size(); c++) {
+
+        // Skip driving the column if it doesn't physically exist
+        if (cols[c] != hardwareMap::NO_PIN) {
+            gpio_put(cols[c], 1);
+            sleep_us(2); 
+        }
+
         // Drive the current column high
         gpio_put(cols[c], 1);
         
@@ -46,6 +59,12 @@ void KeypadButtons::update() {
 
         // Read all rows for this column
         for (size_t r = 0; r < rows.size(); r++) {
+            // CRITICAL: If either pin is virtual, skip hardware modification!
+            // This prevents the hardware from overwriting a simulated TerminalEmulator state.
+            if (cols[c] == hardwareMap::NO_PIN || rows[r] == hardwareMap::NO_PIN) {
+                continue; 
+            }
+            
             bool isPressed = gpio_get(rows[r]);
             
             // Calculate the 1D index: (Row * Total Columns) + Col
@@ -55,10 +74,12 @@ void KeypadButtons::update() {
             if (isPressed != validatedState[index]) {
                 debounceCounters[index]++;
                 
+                // Inside KeypadButtons::update(), right after debounce stabilizes:
                 if (debounceCounters[index] >= DEBOUNCE_THRESHOLD) {
-                    // State has stabilized, accept the new state
                     validatedState[index] = isPressed;
                     debounceCounters[index] = 0;
+
+                    printf("[DEBUG] Matrix Index %d triggered. Pressed: %d\n", index, isPressed); // <-- ADD THIS
 
                     // Fire the appropriate callback
                     if (isPressed && onKeyPressCb) {

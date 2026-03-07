@@ -9,6 +9,9 @@ public:
     // Pass hardware pins via constructor
     KeypadButtons(const std::vector<uint>& rowPins, const std::vector<uint>& colPins);
 
+    // Default constructor with testing configs. Override with parameterized constructor for production.
+    KeypadButtons();
+
     // Setup GPIO pins
     void init();
 

@@ -2,6 +2,8 @@
 
 A modular, C++ based firmware for an RP2350-powered split keyboard. This project integrates multiple hardware subsystems into a unified, non-blocking architecture.
 
+Draw IO: https://drive.google.com/file/d/1josPRPToi0hVMcOZqZrqSURNXhiCR-l0/view
+
 ## Features
 * **ADC Joystick Interface:** Configurable, math-driven transformation pipeline with an integrated Exponential Moving Average (EMA) filter for noise reduction.
 * **LED Patterns:** (WIP) Dynamic visual feedback utilizing Programmable I/O (PIO).

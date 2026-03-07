@@ -2,8 +2,10 @@
 #include "pico/stdlib.h"
 #include <string>
 #include <cstdio>
-#include "KeypadButtons/keypadButtons.h"
+#include "../KeypadButtons/keypadButtons.h"
+#include "keyMap.h"
 #include "Joysticks/PicoJoystick.h"
+
 
 class TerminalEmulator {
 public:

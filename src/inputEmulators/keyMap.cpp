@@ -4,7 +4,7 @@
  * This allows you to easily translate the raw button index from the KeypadButtons class into meaningful characters
  */
 
-#include "KeypadButtons/keyMap.h"
+#include "keyMap.h"
 
 KeyMap::KeyMap(const std::vector<char>& layoutMap) : layout(layoutMap) {}
 

@@ -8,11 +8,10 @@ namespace qwertyMap {
      * Equipment IDs out of bounds return a null character.
      */
     constexpr std::array<char, 48> idToChar = {
-        '`', '1', '2', '3', '4', '5',   '6', '7', '8', '9', '0', '-',
-        'q', 'w', 'e', 'r', 't', 'y',   'y', 'u', 'i', 'o', 'p', '[',
-        'a', 's', 'd', 'f', 'g', 'h',   'h', 'j', 'k', 'l', ';', '\'',
-        'z', 'x', 'c', 'v', 'b', 'n',   'n', 'm', ',', '.', '/', '\\',
-        ' ', ' ', ' ', ' ', ' ', ' ' // Thumbs and unused slots
+        'q', 'w', 'e', 'r', 't', 'y',   'u', 'i', 'o', 'p', '[', '\\',
+        'a', 's', 'd', 'f', 'g', 'h',   'j', 'k', 'l', ';', '\'', '\n',
+        'z', 'x', 'c', 'v', 'b', 'n',   'm', ',', '.', '/', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ',   ' ', ' ', ' ', ' ', ' ', ' ' // Thumbs and unused slots
     };
 
     /**
