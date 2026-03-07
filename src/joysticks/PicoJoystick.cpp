@@ -3,7 +3,15 @@
 
 // Constructor Delegation: Default calls Parameterized
 PicoJoystick::PicoJoystick() 
-    : PicoJoystick(40, 0, 41, 1, 38, {true, false, false}, -10, 0.2f) {}
+    /*testing: 
+     * - pin_x = 40, adc_ch_x = 0
+     * - pin_y = 41, adc_ch_y = 1
+     * - pin_sw = 42
+     * - swap_xy = true, invert_x = true, invert_y = false
+     * - timer_interval_ms = -10 (negative for exact delay between executions)
+     * - ema_alpha = 0.2 (moderate smoothing)
+     */
+    : PicoJoystick(40, 0, 41, 1, 42, {true, true, false}, -10, 0.2f) {}
 
 // Parameterized Constructor
 PicoJoystick::PicoJoystick(uint8_t pin_x, uint8_t adc_ch_x, 
@@ -47,6 +55,12 @@ void PicoJoystick::applyEMA(uint16_t current_x, uint16_t current_y) {
 }
 
 void PicoJoystick::update() {
+    // GUARD: If this is a virtual joystick (NO_PIN), skip hardware reads.
+    // This allows the TerminalEmulator's simulated values to persist!
+    if (pin_x == hardwareMap::NO_PIN || pin_y == hardwareMap::NO_PIN) {
+        return; 
+    }
+
     adc_select_input(adc_ch_x);
     uint16_t current_x = adc_read();
 
@@ -119,4 +133,18 @@ void PicoJoystick::debugPrintSingleLine() const {
     
     // Force immediate output to the console
     fflush(stdout); 
+}
+
+void PicoJoystick::testing_QuickInit() {
+    init();
+    startTimer();
+}
+
+void PicoJoystick::debugPrint() const {
+    debugPrintSingleLine();
+}
+
+
+void PicoJoystick::simulatePosition(uint8_t x, uint8_t y) {
+    printf("[DEBUG] Simulating Joystick Position. X: %d, Y: %d\n", x, y);
 }
