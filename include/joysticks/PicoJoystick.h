@@ -4,6 +4,7 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/timer.h"
+#include "hardwareMap.h"
 
 struct JoystickTransformConfig
 {
@@ -59,11 +60,22 @@ public:
     /// @brief
     void startTimer();
 
-    /// @brief
+    /**
+     * @brief Rapid initialization for testing environments.
+     * Calls init() and startTimer() sequentially.
+     */
+    void testing_QuickInit();
+
     void update(); // Now meant to be called by the IRQ
 
     /// @brief
     void debugPrintSingleLine() const;
+
+    /**
+     * @brief Unified debug print interface.
+     * Currently wraps debugPrintSingleLine().
+     */
+    void debugPrint() const;
 
     // Getters
 
@@ -78,4 +90,12 @@ public:
     /// @brief
     /// @return
     bool getPressed() const { return is_pressed; }
+
+    /**
+     * @brief Manually injects X and Y axis values for emulation, bypassing the ADC.
+     * @param x Simulated 8-bit X-axis value (0-255).
+     * @param y Simulated 8-bit Y-axis value (0-255).
+     */
+    void simulatePosition(uint8_t x, uint8_t y);
 };
+
