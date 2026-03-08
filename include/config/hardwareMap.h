@@ -2,7 +2,9 @@
 #include <array>
 #include <cstdint>
 
+
 namespace hardwareMap {
+    //The constexpr specifier in C++ indicates that a variable or function can be evaluated at compile time. This shifts computations from runtime to compile time, which allows for performance optimizations, earlier bug detection via compile-time checks
     constexpr uint8_t ROWS = 4;
     constexpr uint8_t COLS = 12;
 
