@@ -1,5 +1,5 @@
-#include "KeypadButtons/keypadButtons.h"
-#include "config/hardwareMap.h" // Needed ONLY to read NO_PIN
+#include "keypadButtons.h"
+#include "hardwareMap.h" // Needed ONLY to read NO_PIN
 
 KeypadButtons::KeypadButtons(const std::vector<uint8_t>& rowPins, const std::vector<uint8_t>& colPins) 
     : rows(rowPins), cols(colPins), lastUpdateUs(0) {

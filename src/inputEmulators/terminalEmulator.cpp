@@ -1,5 +1,5 @@
 #include "terminalEmulator.h"
-#include "config/systemMutex.h"
+#include "systemMutex.h"
 
 TerminalEmulator::TerminalEmulator(KeypadButtons& keypad, PicoJoystick& joystick)
     : keypadRef(keypad), joystickRef(joystick) {}

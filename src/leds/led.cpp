@@ -116,9 +116,9 @@ void led_strip::update()
     }
     for(int i = 0; i < NUM_STRIPS; i++){
         for(int j = 0; j < LEDS_PER_STRIP; j++){
-            leds[i][j].r *= 0.7;
-            leds[i][j].g *= 0.7;
-            leds[i][j].b *= 0.7;
+            leds[i][j].r *= 0.5;
+            leds[i][j].g *= 0.5;
+            leds[i][j].b *= 0.5;
         }
     }
 }
