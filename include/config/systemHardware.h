@@ -1,8 +1,8 @@
 // include/config/systemHardware.h
 #pragma once
-#include "KeypadButtons/keypadButtons.h"
-#include "Joysticks/PicoJoystick.h"
-#include "config/hardwareMap.h"
+#include "keypadButtons.h"
+#include "PicoJoystick.h"
+#include "hardwareMap.h"
 /**
  * @brief Container for all physical hardware components on the split keyboard.
  */

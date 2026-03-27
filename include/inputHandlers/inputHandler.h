@@ -1,9 +1,9 @@
 #pragma once
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
-#include "KeypadButtons/keypadButtons.h"
-#include "Joysticks/PicoJoystick.h"
-#include "config/hardwareMap.h"
+#include "keypadButtons.h"
+#include "PicoJoystick.h"
+#include "hardwareMap.h"
 #include <cstdint>
 
 class InputHandler {
