@@ -11,7 +11,10 @@ PicoJoystick::PicoJoystick()
      * - timer_interval_ms = -10 (negative for exact delay between executions)
      * - ema_alpha = 0.2 (moderate smoothing)
      */
-    : PicoJoystick(40, 0, 41, 1, 42, {true, true, false}, -10, 0.2f) {}
+: PicoJoystick(hardwareMap::Pins::JOYSTICK_X, 0, // ADC CH 0
+                   hardwareMap::Pins::JOYSTICK_Y, 1, // ADC CH 1
+                   hardwareMap::Pins::JOYSTICK_SW, 
+                   {true, true, false}, -10, 0.2f) {}
 
 // Parameterized Constructor
 PicoJoystick::PicoJoystick(uint8_t pin_x, uint8_t adc_ch_x, 
@@ -99,9 +102,26 @@ void PicoJoystick::update() {
 
     // Apply Noise Filter
     applyEMA(x_initial, y_initial);
+
+    uint8_t current_x_8bit = static_cast<uint8_t>(x_current >> 4);
+    uint8_t current_y_8bit = static_cast<uint8_t>(y_current >> 4);
+
+    if (current_x_8bit != last_x_8bit) {
+        last_x_8bit = current_x_8bit;
+        if (onChangeCb) onChangeCb(Axis::X, current_x_8bit); // Fire with X enum
+    }
+
+    if (current_y_8bit != last_y_8bit) {
+        last_y_8bit = current_y_8bit;
+        if (onChangeCb) onChangeCb(Axis::Y, current_y_8bit); // Fire with Y enum
+    }
 }
 
 
+
+void PicoJoystick::setOnChange(std::function<void(Axis, uint8_t)> callback) {
+    onChangeCb = callback;
+}
 
 
 
@@ -149,54 +169,28 @@ void PicoJoystick::simulatePosition(uint16_t x, uint16_t y) {
     setPosition(x, y); // Scale 0-255 to 0-4095
 }
 
-//printing
-void PicoJoystick::debugPrint() const {
-    debugPrintSingleLine();
-}
 
-
-// void PicoJoystick::debugPrintSingleLine() const {
-//     printf("\rJOYSTICK [EMA]: X %4d | Y %4d | BTN: %s      ", 
-//            x_current, y_current, is_pressed ? "[PRESS]" : "[     ]");
-//     fflush(stdout); 
-// }
-void PicoJoystick::debugPrintSingleLine() const {
+void PicoJoystick::toString(char* buffer, size_t maxLength) const {
     const int bar_width = 10;
-    
-    // Arrays to hold: '[' + 10 chars + ']' + null terminator
     char x_bar[bar_width + 3]; 
     char y_bar[bar_width + 3]; 
 
-    // Calculate filled positions based on the filtered EMA values
     int x_hashes = (x_current * bar_width) / ADC_MAX_VAL;
     int y_hashes = (y_current * bar_width) / ADC_MAX_VAL;
 
-    // Clamp values to strictly prevent buffer overflow in edge cases
     if (x_hashes > bar_width) x_hashes = bar_width;
     if (y_hashes > bar_width) y_hashes = bar_width;
 
-    // Build X Bar string: e.g., "[###       ]"
     x_bar[0] = '[';
-    for (int i = 0; i < bar_width; i++) {
-        x_bar[i + 1] = (i < x_hashes) ? '#' : ' ';
-    }
-    x_bar[bar_width + 1] = ']';
-    x_bar[bar_width + 2] = '\0';
+    for (int i = 0; i < bar_width; i++) x_bar[i + 1] = (i < x_hashes) ? '#' : ' ';
+    x_bar[bar_width + 1] = ']'; x_bar[bar_width + 2] = '\0';
 
-    // Build Y Bar string: e.g., "[###       ]"
     y_bar[0] = '[';
-    for (int i = 0; i < bar_width; i++) {
-        y_bar[i + 1] = (i < y_hashes) ? '#' : ' ';
-    }
-    y_bar[bar_width + 1] = ']';
-    y_bar[bar_width + 2] = '\0';
+    for (int i = 0; i < bar_width; i++) y_bar[i + 1] = (i < y_hashes) ? '#' : ' ';
+    y_bar[bar_width + 1] = ']'; y_bar[bar_width + 2] = '\0';
 
-    // Print the formatted string, overwriting the current line (\r)
-    printf("\rJOYSTICK: X %s %4d | Y %s %4d | BTN: %s      ", 
-           x_bar, x_current, 
-           y_bar, y_current, 
-           is_pressed ? "[PRESS]" : "[     ]");
-    
-    // Force immediate output to the console
-    fflush(stdout); 
+    // snprintf is the SAFE way to format strings in C/C++. 
+    // It guarantees it will never write past maxLength, preventing buffer overflow exploits/crashes.
+    snprintf(buffer, maxLength, "X %s %4d | Y %s %4d | BTN: %s", x_bar, x_current, y_bar, y_current, is_pressed ? "[PRESS]" : "[     ]");
+
 }
