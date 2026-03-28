@@ -7,9 +7,10 @@
 #include "patterns.hpp"
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
-#include "PicoJoystick.h"
 #include "uart_comm.h"
 #include "key2led.hpp"
+
+#include "inputHandler.h"
 
 /// @brief main core 1
 void main1();

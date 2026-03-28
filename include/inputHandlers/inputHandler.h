@@ -1,59 +1,80 @@
+/**
+ * @file inputHandler.h
+ * @brief Manages input peripherals, aggregates state, and dispatches events.
+ * * Owns the joystick and keypad components via direct composition. Uses an 
+ * internal queue to buffer and filter events before dispatching them non-blockingly
+ * to the multicore FIFO.
+ */
 #pragma once
+
+#include <cstdint>
+#include <queue>
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "keypadButtons.h"
 #include "PicoJoystick.h"
 #include "hardwareMap.h"
-#include <cstdint>
 
 class InputHandler {
 public:
     /**
-     * @brief Default constructor.
-     * Delegates to the parameterized constructor using default peripheral allocations.
+     * @brief Constructs the handler and binds hardware callbacks.
+     * @param isLeftHalf True if this firmware is running on the left physical half.
      */
-    InputHandler();
+    InputHandler(bool isLeftHalf);    
+    /**
+     * @brief Starts the hardware timers for ISR-based polling.
+     */
+    void startHardwareTimers();
+
+    void init(); // universal init
 
     /**
-     * @brief Parameterized constructor associating the handler with specific physical hardware interfaces.
-     * @param keypad Reference to the primary keypad scanning subsystem.
-     * @param leftJoy Reference to the left joystick subsystem.
-     * @param rightJoy Reference to the right joystick subsystem.
-     */
-    InputHandler(KeypadButtons& keypad, PicoJoystick& leftJoy, PicoJoystick& rightJoy);
-    /**
-     * @brief Polls all active input peripherals and processes data non-blockingly.
-     * Must be called continuously in the main execution loop.
+     * @brief Drains the internal queue. Called in main execution loop.
      */
     void update();
 
+
+    /**
+     * @brief Prints a continuously updating, single-line debug state of all managed peripherals.
+     * Overwrites the previous line in the console using a carriage return.
+     */
+    void debugPrint() const;
+
 private:
-    KeypadButtons& matrixRef;
-    PicoJoystick& leftJoyRef;
-    PicoJoystick& rightJoyRef;
+    // Physical hardware components owned entirely by InputHandler
+    KeypadButtons matrix;
+    PicoJoystick joystick; // Identical physical component for both halves
 
-    // State tracking to prevent sending duplicate analog data
-    uint8_t lastLeftX = 0;
-    uint8_t lastLeftY = 0;
-    uint8_t lastRightX = 0;
-    uint8_t lastRightY = 0;
+    std::queue<uint32_t> internalQueue;
+
+    // --- State variables for Handedness Identity ---
+    uint8_t joyIdX;
+    uint8_t joyIdY;
+    
+    // Pointer to the correct 2D mapping array in hardwareMap
+    const std::array<std::array<uint8_t, hardwareMap::COLS>, hardwareMap::ROWS>* matrixMapping;    
+    
+    // Hardware Timers for IRQ polling
+    struct repeating_timer keypadTimer;
+    struct repeating_timer joystickTimer;
+
+    // Static IRQ callbacks
+    static bool keypadTimerCallback(struct repeating_timer *t);
+    static bool joystickTimerCallback(struct repeating_timer *t);
+
+    void handleKeyChange(uint8_t buttonIndex, bool isPressed);
 
     /**
-     * @brief Callback invoked by the matrix scanner when a button is pressed.
-     * @param buttonIndex The 1D hardware index calculated by the keypad driver.
+     * @brief Formats an event and pushes it to the internal C++ queue.
+     * @param equipmentId Predefined ID for the specific hardware piece.
+     * @param actionValue Digital state (1/0) or 8-bit analog payload.
      */
-    void handleKeyPress(uint8_t buttonIndex);
+    void enqueueEvent(uint8_t equipmentId, uint8_t actionValue);
 
     /**
-     * @brief Callback invoked by the matrix scanner when a button is released.
-     * @param buttonIndex The 1D hardware index calculated by the keypad driver.
+     * @brief Attempts to drain the internal queue into the hardware multicore FIFO.
+     * Will stop safely if the hardware FIFO becomes full to prevent blocking.
      */
-    void handleKeyRelease(uint8_t buttonIndex);
-
-    /**
-     * @brief Encodes the ID and Action into a single 32-bit word and pushes it to Core 1.
-     * @param equipmentId The predefined ID for the specific hardware piece.
-     * @param actionValue The digital state (1/0) or 8-bit analog payload.
-     */
-    void dispatchToQueue(uint8_t equipmentId, uint8_t actionValue);
+    void flushQueueToFifo();
 };

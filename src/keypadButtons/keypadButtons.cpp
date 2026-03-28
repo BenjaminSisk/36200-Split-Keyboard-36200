@@ -1,19 +1,25 @@
+/**
+ * @file keypadButtons.cpp
+ * @brief Implementation of the KeypadButtons driver.
+ */
+
 #include "keypadButtons.h"
 #include "hardwareMap.h" // Needed ONLY to read NO_PIN
+#include <cstdio> // For snprintf in toString()
 
-KeypadButtons::KeypadButtons(const std::vector<uint8_t>& rowPins, const std::vector<uint8_t>& colPins) 
-    : rows(rowPins), cols(colPins), lastUpdateUs(0) {
-            
-    int totalButtons = rows.size() * cols.size();
-    validatedState.resize(totalButtons, false);
-    debounceCounters.resize(totalButtons, 0);
+#define KEYBOARD_ROW_PINS hardwareMap::Pins::KEYBOARD_ROW_PINS
+#define KEYBOARD_COL_PINS hardwareMap::Pins::KEYBOARD_COL_PINS
+
+KeypadButtons::KeypadButtons() {
+    // Initialize button states and debounce counters
+    buttonState.fill(false);
+    debounceCounters.fill(0);
 }
 
-KeypadButtons::KeypadButtons() : KeypadButtons({2, 3, 4, 5}, {6, 7, 8}) {}
 
 void KeypadButtons::init() {
     // Initialize Rows (Horizontal) as Inputs with Pull-Downs
-    for (uint pin : rows) {
+    for (uint pin : KEYBOARD_ROW_PINS) {
         if (pin == hardwareMap::NO_PIN) continue; // Skip virtual rows
         gpio_init(pin);
         gpio_set_dir(pin, GPIO_IN);
@@ -21,7 +27,7 @@ void KeypadButtons::init() {
     }
 
     // Initialize Columns (Vertical) as Outputs, driven low initially
-    for (uint pin : cols) {
+    for (uint pin : KEYBOARD_COL_PINS) {
         if (pin == hardwareMap::NO_PIN) continue; // Skip virtual cols
         gpio_init(pin);
         gpio_set_dir(pin, GPIO_OUT);
@@ -31,93 +37,76 @@ void KeypadButtons::init() {
 }
 
 void KeypadButtons::update() {
-    uint32_t currentUs = time_us_32();
-    
-    // Non-blocking wait: only scan every SCAN_INTERVAL_US (e.g., 5ms)
-    if (currentUs - lastUpdateUs < SCAN_INTERVAL_US) {
-        return; 
-    }
-    lastUpdateUs = currentUs;
+    // Removed the time_us_32() check. We rely on the caller (IRQ) for timing.
+    uint8_t totalCols = KEYBOARD_COL_PINS.size();
 
-    uint8_t totalCols = cols.size();
-
-    // Scan through each column
-    for (size_t c = 0; c < cols.size(); c++) {
-
-        // Skip driving the column if it doesn't physically exist
-        if (cols[c] != hardwareMap::NO_PIN) {
-            gpio_put(cols[c], 1);
-            sleep_us(2); 
+    for (size_t c = 0; c < KEYBOARD_COL_PINS.size(); c++) {
+        if (KEYBOARD_COL_PINS[c] != hardwareMap::NO_PIN) {
+            gpio_put(KEYBOARD_COL_PINS[c], 1);
+            busy_wait_us(2); //You cannot wait for an interrupt while you are actively inside an interrupt. T
         }
 
-        // Drive the current column high
-        gpio_put(cols[c], 1);
-        
-        // Brief blocking delay to let the voltage stabilize (capacitance settling)
-        // 2 microseconds is plenty and won't stall the main loop
-        sleep_us(2); 
-
-        // Read all rows for this column
-        for (size_t r = 0; r < rows.size(); r++) {
-            // CRITICAL: If either pin is virtual, skip hardware modification!
-            // This prevents the hardware from overwriting a simulated TerminalEmulator state.
-            if (cols[c] == hardwareMap::NO_PIN || rows[r] == hardwareMap::NO_PIN) {
+        for (size_t r = 0; r < KEYBOARD_ROW_PINS.size(); r++) {
+            if (KEYBOARD_COL_PINS[c] == hardwareMap::NO_PIN || 
+                KEYBOARD_ROW_PINS[r] == hardwareMap::NO_PIN) {
                 continue; 
             }
 
-            bool isPressed = gpio_get(rows[r]);
-            
-            // Calculate the 1D index: (Row * Total Columns) + Col
+            bool isPressed = gpio_get(KEYBOARD_ROW_PINS[r]);
             uint8_t index = (r * totalCols) + c;
 
-            // Debounce Logic State Machine
-            if (isPressed != validatedState[index]) {
+            if (isPressed != buttonState[index]) {
                 debounceCounters[index]++;
                 
-                // Inside KeypadButtons::update(), right after debounce stabilizes:
                 if (debounceCounters[index] >= DEBOUNCE_THRESHOLD) {
-                    validatedState[index] = isPressed;
+                    buttonState[index] = isPressed;
                     debounceCounters[index] = 0;
 
-                    printf("[DEBUG] Matrix Index %d triggered. Pressed: %d\n", index, isPressed); // <-- ADD THIS
+                    printf("[DEBUG] Matrix Index %d changed. Pressed: %d\n", index, isPressed);
 
-                    // Fire the appropriate callback
-                    if (isPressed && onKeyPressCb) {
-                        onKeyPressCb(index);
-                    } else if (!isPressed && onKeyReleaseCb) {
-                        onKeyReleaseCb(index);
+                    // WHAT: Fire the single unified callback, passing the state as an argument.
+                    // WHY: Consolidates the event pipeline.
+                    if (onChangeCb) {
+                        onChangeCb(index, isPressed);
                     }
                 }
             } else {
-                // If the reading matches the validated state, reset the bounce counter
                 debounceCounters[index] = 0;
             }
         }
-
-        // Drive the column back low before moving to the next one
-        gpio_put(cols[c], 0);
+        gpio_put(KEYBOARD_COL_PINS[c], 0);
     }
 }
 
-void KeypadButtons::setOnKeyPress(std::function<void(uint8_t)> callback) {
-    onKeyPressCb = callback;
+void KeypadButtons::setOnChange(std::function<void(uint8_t, bool)> callback) {
+    onChangeCb = callback;
 }
 
-void KeypadButtons::setOnKeyRelease(std::function<void(uint8_t)> callback) {
-    onKeyReleaseCb = callback;
-}
 
 void KeypadButtons::simulateState(uint8_t buttonIndex, bool isPressed) {
-    if (buttonIndex >= validatedState.size()) return;
+    if (buttonIndex >= buttonState.size()) return;
 
     // Only fire if the simulated state differs from the current validated state
-    if (validatedState[buttonIndex] != isPressed) {
-        validatedState[buttonIndex] = isPressed;
+    if (buttonState[buttonIndex] != isPressed) {
+        buttonState[buttonIndex] = isPressed;
         
-        if (isPressed && onKeyPressCb) {
-            onKeyPressCb(buttonIndex);
-        } else if (!isPressed && onKeyReleaseCb) {
-            onKeyReleaseCb(buttonIndex);
+        if (isPressed && onChangeCb) {
+            onChangeCb(buttonIndex, isPressed);
+        } else if (!isPressed && onChangeCb) {
+            onChangeCb(buttonIndex, isPressed);
         }
     }
+}
+
+void KeypadButtons::toString(char* buffer, size_t maxLength) const {
+    // Safety check: Ensure the buffer is large enough for 24 buttons + null terminator
+    if (maxLength < hardwareMap::TOTAL_BUTTONS + 1) return;
+    
+    for (size_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
+        // '#' represents a pressed button, '-' represents released
+        buffer[i] = buttonState[i] ? '#' : '-';
+    }
+    
+    // Always manually null-terminate C-strings
+    buffer[hardwareMap::TOTAL_BUTTONS] = '\0';
 }
