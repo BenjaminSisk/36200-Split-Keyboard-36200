@@ -31,15 +31,15 @@ private:
     // Internal State
     uint16_t x_raw;
     uint16_t y_raw;
-    uint16_t x_filtered;
-    uint16_t y_filtered;
+    uint16_t x_current;
+    uint16_t y_current;
     bool is_pressed;
 
     struct repeating_timer timer;
     static const uint16_t ADC_MAX_VAL = 4095;
 
     // Internal modular functions
-    void applyEMA(uint16_t current_x, uint16_t current_y);
+    void applyEMA(uint16_t x_initial, uint16_t y_initial);
     static bool timerCallback(struct repeating_timer *t);
 
 public:
@@ -54,19 +54,52 @@ public:
                  int32_t timer_interval_ms,
                  float ema_alpha);
 
-    /// @brief
-    void init();
+    /**
+     * @brief initialize hardware and optionally start the timer immediately.
+     * @param trigger If true, starts the timer immediately after initialization.
+     */
+    void init(bool trigger = false);
 
-    /// @brief
+    /*
+    * @brief Start the repeating timer to update joystick readings at regular intervals.
+     * This is typically called after initialization to begin the periodic polling of the joystick.
+    */ 
     void startTimer();
 
-    /**
-     * @brief Rapid initialization for testing environments.
-     * Calls init() and startTimer() sequentially.
-     */
-    void testing_QuickInit();
 
     void update(); // Now meant to be called by the IRQ
+
+//===================================================================================================================================
+    //direct modifiers
+
+    // Getters
+
+    /// @brief get the current filtered X value (0-4095)
+    /// @return
+    uint16_t getX() const;
+
+    /// @brief get the current filtered Y value (0-4095)
+    /// @return 
+    uint16_t getY() const;
+
+    /// @brief Check if the joystick button is currently pressed.
+    /// @return true if pressed, false otherwise.
+    bool getPressed() const;
+
+    // Setters
+    
+    // @brief Directly set the raw X and Y values, bypassing ADC reads. Useful for emulation.
+    void setPosition(uint16_t x, uint16_t y);
+
+//===================================================================================================================================
+//debug:
+//===================================================================================================================================
+    /**
+     * @brief Manually injects X and Y axis values for emulation, bypassing the ADC.
+     * @param x Simulated 16-bit X-axis value (0-4095).
+     * @param y Simulated 16-bit Y-axis value (0-4095).
+     */
+    void simulatePosition(uint16_t x, uint16_t y);
 
     /// @brief
     void debugPrintSingleLine() const;
@@ -77,25 +110,5 @@ public:
      */
     void debugPrint() const;
 
-    // Getters
-
-    /// @brief
-    /// @return
-    uint16_t getX() const { return x_filtered; }
-
-    /// @brief
-    /// @return
-    uint16_t getY() const { return y_filtered; }
-
-    /// @brief
-    /// @return
-    bool getPressed() const { return is_pressed; }
-
-    /**
-     * @brief Manually injects X and Y axis values for emulation, bypassing the ADC.
-     * @param x Simulated 8-bit X-axis value (0-255).
-     * @param y Simulated 8-bit Y-axis value (0-255).
-     */
-    void simulatePosition(uint8_t x, uint8_t y);
 };
 
