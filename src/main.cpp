@@ -76,10 +76,7 @@ int main()
 
     // Initialize using constructor delegation defaults
     PicoJoystick joystick;
-    joystick.init();
-
-    // Fire up the hardware timer IRQ
-    joystick.startTimer();
+    joystick.init(true);
 
     // The main loop is now entirely decoupled from sensor polling latency
     while (true)
