@@ -11,6 +11,7 @@
 #include "device/usbd.h"
 #include "bsp/board_api.h"
 #include "tusb.h"
+#include "pico/unique_id.h"
 /*
  * The MIT License (MIT)
  *
@@ -117,6 +118,19 @@ void board_init() {
   usb_hw_t *usb_hw_set = (usb_hw_t *)hw_set_alias_untyped(usb_hw);
   // Present full speed device by enabling pull up on DP
   usb_hw_set->sie_ctrl = USB_SIE_CTRL_PULLUP_EN_BITS;
+}
+
+void board_init_after_tusb(void) {
+  // Nothing needed post-TinyUSB init on RP2040
+}
+
+size_t board_get_unique_id(uint8_t id[], size_t max_len) {
+  pico_unique_board_id_t pico_id;
+  pico_get_unique_board_id(&pico_id);
+  size_t len = PICO_UNIQUE_BOARD_ID_SIZE_BYTES;
+  if (len > max_len) len = max_len;
+  memcpy(id, pico_id.id, len);
+  return len;
 }
 
 //--------------------------------------------------------------------+
