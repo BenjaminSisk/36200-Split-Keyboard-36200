@@ -75,17 +75,20 @@ int main()
     printf("System Initialized. Starting IRQs...\n");
 
     // Initialize using constructor delegation defaults
-    PicoJoystick joystick;
-    joystick.init();
-
-    // Fire up the hardware timer IRQ
-    joystick.startTimer();
+    //PicoJoystick joystick;
+    //joystick.init(true);
+    InputHandler inputHandler(hardwareMap::IS_LEFT_HALF);
+    inputHandler.init();
 
     // The main loop is now entirely decoupled from sensor polling latency
     while (true)
     {
+
+        inputHandler.update(); // Flushes the event queue to the FIFO, non-blocking
         // Output visualization using the filtered data
-        joystick.debugPrintSingleLine();
+        //joystick.debugPrintSingleLine();
+
+        inputHandler.debugPrint(); // Unified debug print for all peripherals
 
         // This sleep no longer blocks sensor reading!
         sleep_ms(100);
