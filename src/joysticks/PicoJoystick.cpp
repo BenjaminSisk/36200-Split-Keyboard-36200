@@ -112,12 +112,13 @@ void PicoJoystick::update() {
     uint8_t current_x_8bit = static_cast<uint8_t>(x_current >> 4);
     uint8_t current_y_8bit = static_cast<uint8_t>(y_current >> 4);
 
-    if (current_x_8bit != last_x_8bit) {
+
+    if (current_x_8bit > last_x_8bit + ADC_NOISE_THRESHOLD || current_x_8bit < last_x_8bit - ADC_NOISE_THRESHOLD) {
         last_x_8bit = current_x_8bit;
         if (onChangeCb) onChangeCb(Axis::X, current_x_8bit); // Fire with X enum
     }
 
-    if (current_y_8bit != last_y_8bit) {
+    if (current_y_8bit > last_y_8bit + ADC_NOISE_THRESHOLD || current_y_8bit < last_y_8bit - ADC_NOISE_THRESHOLD) {
         last_y_8bit = current_y_8bit;
         if (onChangeCb) onChangeCb(Axis::Y, current_y_8bit); // Fire with Y enum
     }

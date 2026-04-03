@@ -104,6 +104,7 @@ private:
     JoystickTransformConfig config;
     int32_t timer_interval_ms;
     float ema_alpha; // Smoothing factor: 0.0 (max smoothing) to 1.0 (no smoothing)
+    const int ADC_NOISE_THRESHOLD = 10; // Minimum change required to consider it a valid movement
 
     // Internal State
     uint16_t x_raw;

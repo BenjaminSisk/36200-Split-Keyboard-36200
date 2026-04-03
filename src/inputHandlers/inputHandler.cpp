@@ -98,6 +98,7 @@ void InputHandler::debugPrint() const {
 }
 
 void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
+    // printf("[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);
     uint32_t payload = (static_cast<uint32_t>(equipmentId) << 8) | actionValue;
     internalQueue.push(payload);
 }
