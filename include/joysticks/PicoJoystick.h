@@ -46,7 +46,7 @@ public:
     void update(); // Now meant to be called by the IRQ
 
 
-    // Enums are great here because they provide strict type safety at compile time
+    // Enumermuation of axis for joystick. 
     enum class Axis { X, Y };
     // Callbacks
     void setOnChange(std::function<void(Axis, uint8_t)> callback);

@@ -30,7 +30,7 @@ namespace hardwareMap {
         // constexpr uint8_t RIGHT_JOY_X  = NO_PIN;
 
         //joysticks
-        constexpr uint8_t JOYSTICK_SW = 42;
+        constexpr uint8_t JOYSTICK_SW = 13;
         constexpr uint8_t JOYSTICK_Y  = 41;
         constexpr uint8_t JOYSTICK_X  = 40;
 
