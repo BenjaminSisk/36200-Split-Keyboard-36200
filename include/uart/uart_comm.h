@@ -1,5 +1,6 @@
 #ifndef UART_HANDLER_H
 #define UART_HANDLER_H
+#define RING_BUFFER_SIZE 256
 
 #include "pico/stdlib.h"
 #include "hardware/uart.h"
@@ -34,5 +35,16 @@ void init_uart_isr(void);
 /// @param dest
 /// @return true if no parity/framing error
 bool try_read_uart(uart_inst_t *uart, uint8_t *dest);
+
+/// @brief Returns data from the uart buffer
+/// @param address to store byte 1
+/// @param address to store byte 2
+/// @return true succesful
+bool uart_read_pair(uint8_t *byte1, uint8_t *byte2);
+
+/// @brief Sends two bytes over UART
+/// @param byte1 First byte to send
+/// @param byte2 Second byte to send
+void keyboard_uart_send(uint8_t byte1, uint8_t byte2);
 
 #endif
