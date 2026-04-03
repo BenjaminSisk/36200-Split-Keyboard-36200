@@ -1,15 +1,22 @@
 #include "uart_comm.h"
 #include <stdio.h>
 
+// Ring buffer for UART1 (Subordinate data)
+static struct {
+    uint8_t buffer[RING_BUFFER_SIZE];
+    volatile uint16_t head;
+    volatile uint16_t tail;
+} rb1 = {0};
+
 volatile uint32_t parity_error_count = 0;
 volatile uint8_t last_valid_byte = 0;
 
 void init_uart_pins() {
-   
+    /*
     uart_init(UART_ID0, BAUD_RATE);
     gpio_set_function(UART_TX0_PIN, UART_FUNCSEL_NUM(UART_ID0, UART_TX0_PIN));
     gpio_set_function(UART_RX0_PIN, UART_FUNCSEL_NUM(UART_ID0, UART_RX0_PIN));
-    
+    */
     
     uart_set_format(UART_ID0, 8, 1, UART_PARITY_EVEN);
    
@@ -63,21 +70,54 @@ void on_uart1_rx() {
     uint8_t data;
     if (try_read_uart(UART_ID1, &data)) {
         last_valid_byte = data;
-        //uart_putc(UART_ID0, data);
-        //uart_putc(UART_ID1, data); // Pass valid data through to UART 0
+        
+        // Push to ring buffer
+        uint16_t next = (rb1.head + 1) % RING_BUFFER_SIZE;
+        if (next != rb1.tail) {
+            rb1.buffer[rb1.head] = data;
+            rb1.head = next;
+        }
     }
 }
 
 void init_uart_isr() {
+    /*
     // --- UART 0 Interrupt setup ---
     irq_set_exclusive_handler(UART0_IRQ, on_uart0_rx);
     irq_set_enabled(UART0_IRQ, true);
     // Enable the RX interrupt
     uart_set_irqs_enabled(UART_ID0, true, false);
+    */
 
     // --- UART 1 Interrupt setup ---
     irq_set_exclusive_handler(UART1_IRQ, on_uart1_rx);
     irq_set_enabled(UART1_IRQ, true);
     // Enable the RX interrupt
     uart_set_irqs_enabled(UART_ID1, true, false);
+}
+
+void keyboard_uart_send(uint8_t byte1, uint8_t byte2) {
+    uart_putc(UART_ID1, byte1);
+    uart_putc(UART_ID1, byte2);
+}
+
+bool uart_read_pair(uint8_t *byte1, uint8_t *byte2) {
+    static uint8_t first_byte = 0;
+    static bool waiting_for_second = false;
+
+    while (rb1.head != rb1.tail) {
+        uint8_t data = rb1.buffer[rb1.tail];
+        rb1.tail = (rb1.tail + 1) % RING_BUFFER_SIZE;
+
+        if (!waiting_for_second) {
+            first_byte = data;
+            waiting_for_second = true;
+        } else {
+            *byte1 = first_byte;
+            *byte2 = data;
+            waiting_for_second = false;
+            return true;
+        }
+    }
+    return false;
 }
