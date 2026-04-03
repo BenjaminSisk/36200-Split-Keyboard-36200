@@ -78,7 +78,7 @@ int main()
     //PicoJoystick joystick;
     //joystick.init(true);
     InputHandler inputHandler(hardwareMap::IS_LEFT_HALF);
-    inputHandler.startHardwareTimers();
+    inputHandler.init();
 
     // The main loop is now entirely decoupled from sensor polling latency
     while (true)

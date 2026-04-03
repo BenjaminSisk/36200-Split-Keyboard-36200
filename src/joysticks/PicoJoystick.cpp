@@ -14,7 +14,7 @@ PicoJoystick::PicoJoystick()
 : PicoJoystick(hardwareMap::Pins::JOYSTICK_X, 0, // ADC CH 0
                    hardwareMap::Pins::JOYSTICK_Y, 1, // ADC CH 1
                    hardwareMap::Pins::JOYSTICK_SW, 
-                   {true, true, false}, -10, 0.2f) {}
+                   {false, false, false}, -10, 0.2f) {}
 
 // Parameterized Constructor
 PicoJoystick::PicoJoystick(uint8_t pin_x, uint8_t adc_ch_x, 
@@ -38,6 +38,11 @@ void PicoJoystick::init(bool trigger) {
     //configs
     gpio_set_dir(pin_sw, GPIO_IN);
     gpio_pull_up(pin_sw);
+
+    // for(;;) {
+    //     bool testing = gpio_get(pin_sw);
+    //     printf("[DEBUG] Joystick Switch State: %d\n", testing);
+    // }
 
     //enables
 
@@ -82,7 +87,8 @@ void PicoJoystick::update() {
     adc_select_input(adc_ch_y);
     uint16_t y_initial = adc_read();
 
-    is_pressed = !gpio_get(pin_sw);
+    is_pressed = !gpio_get(13); //!gpio_get(pin_sw);
+    // printf("[DEBUG] Joystick Readings - Raw X: %d, Raw Y: %d, Pressed: %d\n", x_initial, y_initial, gpio_get(13));
 
     // Pipeline Transform
     if (config.swap_xy) {

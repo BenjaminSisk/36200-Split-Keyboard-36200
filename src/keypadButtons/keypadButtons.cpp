@@ -47,8 +47,7 @@ void KeypadButtons::update() {
         }
 
         for (size_t r = 0; r < KEYBOARD_ROW_PINS.size(); r++) {
-            if (KEYBOARD_COL_PINS[c] == hardwareMap::NO_PIN || 
-                KEYBOARD_ROW_PINS[r] == hardwareMap::NO_PIN) {
+            if (KEYBOARD_ROW_PINS[r] == hardwareMap::NO_PIN) {
                 continue; 
             }
 
