@@ -106,11 +106,35 @@ void KeypadButtons::toString(char* buffer, size_t maxLength) const {
     // Safety check: Ensure the buffer is large enough for 24 buttons + null terminator
     if (maxLength < hardwareMap::TOTAL_BUTTONS + 1) return;
     
+    size_t last_id = -1;
     for (size_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
         // '#' represents a pressed button, '-' represents released
         buffer[i] = buttonState[i] ? '#' : '-';
+
+        // if (buttonState[i]) {
+        //     last_id = i;
+        // }
     }
-    
+
+    buffer[hardwareMap::TOTAL_BUTTONS+1] = std::to_string(last_id).c_str()[0]; // Append the last pressed button index for easier debugging
+    buffer[hardwareMap::TOTAL_BUTTONS+2] = std::to_string(last_id).c_str()[1]; // Append the last pressed button index for easier debugging
+
     // Always manually null-terminate C-strings
     buffer[hardwareMap::TOTAL_BUTTONS] = '\0';
+}
+
+// overload for cpp strings
+string KeypadButtons::toString() const {
+    std::ostringstream oss;
+    
+    for (size_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
+        // Explicitly cast "--" to a string to satisfy the ternary operator
+        string val = buttonState[i] ? std::to_string(i) : string("--"); 
+        
+        // std::left aligns the text, std::setw(2) ensures it takes up 2 spaces
+        oss << "|" << std::left << std::setw(2) << val;
+    }
+    oss << "|\0"; // Null-terminate the string
+
+    return oss.str();
 }

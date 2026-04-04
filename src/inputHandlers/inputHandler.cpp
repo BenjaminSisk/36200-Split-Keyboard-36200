@@ -78,24 +78,20 @@ void InputHandler::handleKeyChange(uint8_t buttonIndex, bool isPressed) {
     }
 }
 
-
 void InputHandler::debugPrint() const {
-    // 1. Allocate fixed-size buffers on the stack (Extremely fast, zero heap fragmentation)
     char joyBuffer[80]; 
-    char keyBuffer[32]; // Needs at least 25 bytes (24 buttons + 1 null terminator)
-
-    // 2. Command the subclasses to populate their strings
     joystick.toString(joyBuffer, sizeof(joyBuffer));
-    matrix.toString(keyBuffer, sizeof(keyBuffer));
 
-    // 3. Print the master line. 
+    // Get the string and pass its underlying C-string directly to printf
+    std::string keyString = matrix.toString(); 
+
     // \r moves the cursor to the start of the line.
-    // The extra spaces at the end ensure that if the string gets shorter, old characters are erased.
-    printf("\rSYS: [%s] | KEYS: [%s]       ", joyBuffer, keyBuffer);
+    printf("\rSYS: [%s] | KEYS: [%s]        ", joyBuffer, keyString.c_str());
     
-    // 4. Force the console to output immediately, since we aren't using \n
+    // Force the console to output immediately
     fflush(stdout);
 }
+
 
 void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
     // printf("[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);

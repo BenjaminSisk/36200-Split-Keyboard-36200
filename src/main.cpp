@@ -82,7 +82,7 @@ int main()
         // Output visualization using the filtered data
         // joystick.debugPrintSingleLine();
 
-        inputHandler.debugPrint(); // Unified debug print for all peripherals
+        // inputHandler.debugPrint(); // Unified debug print for all peripherals
 
         // This sleep no longer blocks sensor reading!
         sleep_ms(100);
