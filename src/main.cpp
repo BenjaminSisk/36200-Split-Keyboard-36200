@@ -50,7 +50,7 @@ void main1()
             }
             strips[0].x = pos.col;
             strips[0].y = pos.row;
-            // printf("read keypress: (%d, %d)\n", pos.row, pos.col);
+            printf("read keypress: (%d, %d)\n", pos.row, pos.col);
         }
         strips[0].update();
         target = delayed_by_us(get_absolute_time(), 100);
@@ -88,7 +88,7 @@ int main()
         // Output visualization using the filtered data
         //joystick.debugPrintSingleLine();
 
-        inputHandler.debugPrint(); // Unified debug print for all peripherals
+        // inputHandler.debugPrint(); // Unified debug print for all peripherals
 
         // This sleep no longer blocks sensor reading!
         sleep_ms(100);

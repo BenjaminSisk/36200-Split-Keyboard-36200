@@ -4,6 +4,12 @@
 #include <vector>
 #include <functional>
 #include <cstdint>
+#include <array>
+#include <string>
+#include <sstream>
+#include <iomanip>
+
+using namespace std;
 
 class KeypadButtons {
 public:
@@ -34,7 +40,7 @@ public:
      * @param maxLength The maximum number of bytes that can be written safely.
      */
     void toString(char* buffer, size_t maxLength) const;
-
+    string toString() const;
 
 private:
     //row and col stored in hardwareMap. 
@@ -43,9 +49,9 @@ private:
     const uint32_t SCAN_INTERVAL_US = 5000;   // Scan the whole matrix every 5ms
     const uint8_t DEBOUNCE_THRESHOLD = 4;     // Requires 4 consecutive identical reads (20ms)
     
-    std::array<bool, hardwareMap::TOTAL_BUTTONS> buttonState; // Final debounced state of each button
-    std::array<uint8_t, hardwareMap::TOTAL_BUTTONS> debounceCounters;
+    array<bool, hardwareMap::TOTAL_BUTTONS> buttonState; // Final debounced state of each button
+    array<uint8_t, hardwareMap::TOTAL_BUTTONS> debounceCounters;
 
-    std::function<void(uint8_t, bool)> onChangeCb;
+    function<void(uint8_t, bool)> onChangeCb;
 
 };
