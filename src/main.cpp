@@ -42,14 +42,8 @@ void main1()
         {
             uint32_t key_press = multicore_fifo_pop_blocking();
             uint8_t id = (key_press >> 8) & 0xff;
-            // uint8_t action = (key_press) & 0xff;
-            struct Coord pos = {-1, -1};
-            if (key2led.count(id))
-            {
-                pos = key2led[id];
-            }
-            strips[0].x = pos.col;
-            strips[0].y = pos.row;
+            strips[0].x = id % 6;
+            strips[0].y = id / 4;
             // printf("read keypress: (%d, %d)\n", pos.row, pos.col);
         }
         strips[0].update();
@@ -75,8 +69,8 @@ int main()
     printf("System Initialized. Starting IRQs...\n");
 
     // Initialize using constructor delegation defaults
-    //PicoJoystick joystick;
-    //joystick.init(true);
+    // PicoJoystick joystick;
+    // joystick.init(true);
     InputHandler inputHandler(hardwareMap::IS_LEFT_HALF);
     inputHandler.init();
 
@@ -86,7 +80,7 @@ int main()
 
         inputHandler.update(); // Flushes the event queue to the FIFO, non-blocking
         // Output visualization using the filtered data
-        //joystick.debugPrintSingleLine();
+        // joystick.debugPrintSingleLine();
 
         inputHandler.debugPrint(); // Unified debug print for all peripherals
 
