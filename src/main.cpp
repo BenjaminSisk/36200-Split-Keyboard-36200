@@ -44,7 +44,7 @@ void main1()
             uint8_t id = (key_press >> 8) & 0xff;
             strips[0].x = id % 6;
             strips[0].y = id / 4;
-            // printf("read keypress: (%d, %d)\n", pos.row, pos.col);
+            printf("read keypress: (%d, %d)\n", strips[0].x, strips[0].y);
         }
         strips[0].update();
         target = delayed_by_us(get_absolute_time(), 100);

@@ -32,4 +32,7 @@ For more information, see the the [docs](./docs) directory.
 
 1. Install the Pico C/C++ SDK.
 2. Clone this repository.
+- git pull
+- git submodule init
+- git submodule update
 3. Build + Upload and Monitor on PlatformIO
