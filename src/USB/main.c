@@ -55,6 +55,10 @@
  * - 1000 ms : device mounted
  * - 2500 ms : device is suspended
  */
+// Test button: GPIO pulled high internally, active-low when shorted to GND.
+// Replace with a real key pin once matrix scanning is wired up.
+#define BOARD_BUTTON_PIN 15
+
 enum {
   BLINK_NOT_MOUNTED = 250,
   BLINK_MOUNTED     = 1000,
@@ -87,6 +91,16 @@ int main(void) {
 // This comes from the datasheet's USB section: 
 // https://github.com/raspberrypi/pico-examples/blob/master/usb/device/dev_lowlevel/dev_lowlevel.c#L183-L217
 void board_init() {
+  // Initialize onboard LED GPIO so board_led_write() works
+  gpio_init(PICO_DEFAULT_LED_PIN);
+  gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+  // Initialize test button pin (active-low, internal pull-up)
+  // Swap BOARD_BUTTON_PIN for a real key GPIO once matrix scanning is implemented
+  gpio_init(BOARD_BUTTON_PIN);
+  gpio_set_dir(BOARD_BUTTON_PIN, GPIO_IN);
+  gpio_pull_up(BOARD_BUTTON_PIN);
+
   // Reset usb controller
   reset_unreset_block_num_wait_blocking(RESET_USBCTRL);
   
@@ -150,7 +164,7 @@ void tud_umount_cb(void) {
 }
 
 // Invoked when usb bus is suspended
-// remote_wakeup_en : if host allow us  to perform remote wakeup
+// remote_wakeup_en : if host allow us  to perfaaaaaaaaaaaorm remote wakeup
 // Within 7ms, device must draw an average of current less than 2.5 mA from bus
 void tud_suspend_cb(bool remote_wakeup_en) {
   (void)remote_wakeup_en;
@@ -251,18 +265,16 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
 void hid_task(void) {
-  printf("hid_task does nothing rn");
   // Poll every 10ms
-  /*
   const uint32_t  interval_ms = 10;
   static uint32_t start_ms    = 0;
 
-  if (board_millis() - start_ms < interval_ms) {
+  if (to_ms_since_boot(get_absolute_time()) - start_ms < interval_ms) {
     return; // not enough time
   }
   start_ms += interval_ms;
 
-  uint32_t const btn = board_button_read();
+  uint32_t const btn = !gpio_get(BOARD_BUTTON_PIN);
 
   // Remote wakeup
   if (tud_suspended() && btn != 0u) {
@@ -273,7 +285,6 @@ void hid_task(void) {
     // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
     send_hid_report(REPORT_ID_KEYBOARD, btn);
   }
-    */
 }
 
 // Invoked when sent REPORT successfully to host
@@ -286,8 +297,7 @@ void tud_hid_report_complete_cb(uint8_t instance, uint8_t const *report, uint16_
   uint8_t next_report_id = report[0] + 1u;
 
   if (next_report_id < REPORT_ID_COUNT) {
-    //send_hid_report(next_report_id, board_button_read());
-    send_hid_report(next_report_id, printf("board_button_read"));
+    send_hid_report(next_report_id, !gpio_get(BOARD_BUTTON_PIN));
   }
 }
 
@@ -325,12 +335,10 @@ void tud_hid_set_report_cb(
       if ((kbd_leds & KEYBOARD_LED_CAPSLOCK) != 0u) {
         // Capslock On: disable blink, turn led on
         blink_interval_ms = 0;
-        //board_led_write(true);
-        printf("board_led_write");
+          gpio_put(PICO_DEFAULT_LED_PIN, true);
       } else {
         // Caplocks Off: back to normal blink
-        //board_led_write(false);
-        printf("Not board_led_write");
+         gpio_put(PICO_DEFAULT_LED_PIN, false);
         blink_interval_ms = BLINK_MOUNTED;
       }
     }
@@ -350,15 +358,11 @@ void led_blinking_task(void) {
   }
 
   // Blink every interval ms
-  printf("board_millis");
-  //if (board_millis() - start_ms < blink_interval_ms) {
-  if (start_ms < 0)
-  {
+  if (to_ms_since_boot(get_absolute_time()) - start_ms < blink_interval_ms) {
     return; // not enough time
   }
   start_ms += blink_interval_ms;
 
-  printf("board_led_write");
-  //board_led_write(led_state);
+  gpio_put(PICO_DEFAULT_LED_PIN, led_state);
   led_state = 1 - led_state; // toggle
 }
