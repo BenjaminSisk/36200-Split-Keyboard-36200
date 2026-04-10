@@ -43,6 +43,7 @@ void main1()
             uint32_t key_press = multicore_fifo_pop_blocking();
             uint8_t id = (key_press >> 8) & 0xff;
             // uint8_t action = (key_press) & 0xff;
+            printf("id: %d, value: %d\n", id, key_press & 0xff);
             struct Coord pos = {-1, -1};
             if (key2led.count(id))
             {
@@ -50,7 +51,7 @@ void main1()
             }
             strips[0].x = pos.col;
             strips[0].y = pos.row;
-            printf("read keypress: (%d, %d)\n", pos.row, pos.col);
+            // printf("read keypress: (%d, %d)\n", pos.row, pos.col);
         }
         strips[0].update();
         target = delayed_by_us(get_absolute_time(), 100);
