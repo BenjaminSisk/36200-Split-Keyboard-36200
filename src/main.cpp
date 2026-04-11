@@ -79,7 +79,6 @@ enum {
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
-void led_blinking_task(void);
 void hid_task(void);
 
 // Each "platform" (like the RP2350) must define its own board_init() function.
@@ -87,8 +86,6 @@ void hid_task(void);
 // https://github.com/raspberrypi/pico-examples/blob/master/usb/device/dev_lowlevel/dev_lowlevel.c#L183-L217
 void board_init() {
   // Initialize onboard LED GPIO so board_led_write() works
-  gpio_init(PICO_DEFAULT_LED_PIN);
-  gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
   // Initialize test button pin (active-low, internal pull-up)
   // Swap BOARD_BUTTON_PIN for a real key GPIO once matrix scanning is implemented
@@ -340,28 +337,6 @@ void tud_hid_set_report_cb(
   }
 }
 
-//--------------------------------------------------------------------+
-// BLINKING TASK
-//--------------------------------------------------------------------+
-void led_blinking_task(void) {
-  static uint32_t start_ms  = 0;
-  static bool     led_state = false;
-
-  // blink is disabled
-  if (0u == blink_interval_ms) {
-    return;
-  }
-
-  // Blink every interval ms
-  if (to_ms_since_boot(get_absolute_time()) - start_ms < blink_interval_ms) {
-    return; // not enough time
-  }
-  start_ms += blink_interval_ms;
-
-  gpio_put(PICO_DEFAULT_LED_PIN, led_state);
-  led_state = 1 - led_state; // toggle
-}
-
 void main1()
 {
     stdio_init_all();
@@ -412,7 +387,7 @@ int main()
     stdio_init_all();
     sleep_ms(500);
     multicore_launch_core1(main1);
-
+    
     board_init();
     // init device stack on configured roothub port
     tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE, .speed = TUSB_SPEED_AUTO};
@@ -444,7 +419,6 @@ int main()
 
         // This sleep no longer blocks sensor reading!
         tud_task(); // tinyusb device task
-        led_blinking_task();
         hid_task();
         //sleep_ms(100);
     }
