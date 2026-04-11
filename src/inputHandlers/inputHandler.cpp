@@ -61,8 +61,6 @@ void InputHandler::update() {
     flushQueueToFifo();
 }
 
-
-
 // WHAT: The new unified key handler.
 // WHY: We convert the 'isPressed' boolean into a 1 or 0 action value in a single line, 
 // eliminating the need for duplicate functions.
