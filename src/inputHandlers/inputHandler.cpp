@@ -11,11 +11,11 @@ InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
     if (isLeftHalf) {
         joyIdX = hardwareMap::LEFT_JOY_X_ID;
         joyIdY = hardwareMap::LEFT_JOY_Y_ID;
-        matrixMapping = &hardwareMap::BUTTON_POSITION_TO_ID_LEFT;
+        matrixMapping = &hardwareMap::BUTTON_POSITION_TO_ID;
     } else {
         joyIdX = hardwareMap::RIGHT_JOY_X_ID;
         joyIdY = hardwareMap::RIGHT_JOY_Y_ID;
-        matrixMapping = &hardwareMap::BUTTON_POSITION_TO_ID_RIGHT;
+        matrixMapping = &hardwareMap::BUTTON_POSITION_TO_ID;
     }
 
     // WHAT: Bind the unified matrix callback.
