@@ -43,7 +43,7 @@ void main1()
             uint32_t key_press = multicore_fifo_pop_blocking();
             uint8_t id = (key_press >> 8) & 0xff;
             // uint8_t action = (key_press) & 0xff;
-            printf("id: %d, value: %d\n", id, key_press & 0xff);
+            // printf("id: %d, value: %d\n", id, key_press & 0xff);
             struct Coord pos = {-1, -1};
             if (key2led.count(id))
             {
@@ -89,7 +89,7 @@ int main()
         // Output visualization using the filtered data
         //joystick.debugPrintSingleLine();
 
-        // inputHandler.debugPrint(); // Unified debug print for all peripherals
+        inputHandler.debugPrint(); // Unified debug print for all peripherals
 
         // This sleep no longer blocks sensor reading!
         sleep_ms(100);
