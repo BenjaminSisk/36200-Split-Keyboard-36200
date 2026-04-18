@@ -369,9 +369,16 @@ void main1()
         {
             uint32_t key_press = multicore_fifo_pop_blocking();
             uint8_t id = (key_press >> 8) & 0xff;
-            strips[0].x = id % 6;
-            strips[0].y = id / 4;
-            printf("read keypress: (%d, %d)\n", strips[0].x, strips[0].y);
+            // uint8_t action = (key_press) & 0xff;
+            // printf("id: %d, value: %d\n", id, key_press & 0xff);
+            struct Coord pos = {-1, -1};
+            if (key2led.count(id))
+            {
+                pos = key2led[id];
+            }
+            strips[0].x = pos.col;
+            strips[0].y = pos.row;
+            // printf("read keypress: (%d, %d)\n", pos.row, pos.col);
         }
         strips[0].update();
         target = delayed_by_us(get_absolute_time(), 100);
@@ -415,7 +422,7 @@ int main()
         // Output visualization using the filtered data
         // joystick.debugPrintSingleLine();
 
-        // inputHandler.debugPrint(); // Unified debug print for all peripherals
+        inputHandler.debugPrint(); // Unified debug print for all peripherals
 
         // This sleep no longer blocks sensor reading!
         tud_task(); // tinyusb device task
