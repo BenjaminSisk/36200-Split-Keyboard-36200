@@ -3,6 +3,7 @@
  * @brief Implementation of InputHandler configured for dynamic split-keyboard handedness.
  */
 #include "inputHandler.h"
+#include "hardware/sync.h"
 #include <cstdio>
 
 InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
@@ -31,13 +32,18 @@ InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
         this->enqueueEvent(targetId, val); 
     });
 
+    //init variables
+    last_print_ms = 0;
+
 }
 
 void InputHandler::init() {
     matrix.init();
-    joystick.init();
+    joystick.init(false);
 
-    startHardwareTimers();
+    // printf("[inputHandler.cpp] InputHandler initialized. Starting hardware timers...\n");
+
+    // startHardwareTimers();
 }
 
 void InputHandler::startHardwareTimers() {
@@ -47,6 +53,7 @@ void InputHandler::startHardwareTimers() {
 
 bool InputHandler::keypadTimerCallback(struct repeating_timer *t) {
     InputHandler* instance = static_cast<InputHandler*>(t->user_data);
+    // printf("Keypad Timer IRQ Triggered. Instance pointer: %p\n", (void *)instance);
     if (instance) instance->matrix.update();
     return true; 
 }
@@ -58,6 +65,10 @@ bool InputHandler::joystickTimerCallback(struct repeating_timer *t) {
 }
 
 void InputHandler::update() {
+
+    matrix.update();
+    joystick.update();
+
     flushQueueToFifo();
 }
 
@@ -77,34 +88,59 @@ void InputHandler::handleKeyChange(uint8_t buttonIndex, bool isPressed) {
 }
 
 void InputHandler::debugPrint() const {
-    char joyBuffer[80]; 
-    joystick.toString(joyBuffer, sizeof(joyBuffer));
+    //nonblocking print
 
-    // Get the string and pass its underlying C-string directly to printf
-    std::string keyString = matrix.toString(); 
+    uint32_t current_ms = to_ms_since_boot(get_absolute_time());
+    if (current_ms - last_print_ms >= print_interval_ms) {
+        last_print_ms = current_ms;
 
-    // \r moves the cursor to the start of the line.
-    printf("\rSYS: [%s] | KEYS: [%s]        ", joyBuffer, keyString.c_str());
-    
-    // Force the console to output immediately
-    fflush(stdout);
+        char joyBuffer[80]; 
+        joystick.toString(joyBuffer, sizeof(joyBuffer));
+
+        // Get the string and pass its underlying C-string directly to printf
+        std::string keyString = matrix.toString(); 
+
+        // \r moves the cursor to the start of the line.
+        printf("\rSYS: [%s] | KEYS: [%s]        ", joyBuffer, keyString.c_str());
+        
+        // Force the console to output immediately
+        fflush(stdout);
+
+    } else {
+        return; // Skip this print to maintain the interval
+    }
+
 }
 
 
 void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
-    // printf("[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);
     uint32_t payload = (static_cast<uint32_t>(equipmentId) << 8) | actionValue;
+    // printf("[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);
+
+    // Pause interrupts to safely push to the queue
+    uint32_t ints = save_and_disable_interrupts();
     internalQueue.push(payload);
+    restore_interrupts(ints); // Resume interrupts
 }
 
 void InputHandler::flushQueueToFifo() {
-    while (!internalQueue.empty()) {
+    while (true) {
+        uint32_t payload;
+        bool hasData = false;
+
+        // Pause interrupts to safely pop from the queue
+        uint32_t ints = save_and_disable_interrupts();
+        if (!internalQueue.empty()) {
+            payload = internalQueue.front();
+            internalQueue.pop();
+            hasData = true;
+        }
+        restore_interrupts(ints); // Resume interrupts
+
+        if (!hasData) break; // Queue is empty, exit loop
+
         if (multicore_fifo_wready()) {
-            uint32_t payload = internalQueue.front();
             multicore_fifo_push_blocking(payload);
-            internalQueue.pop(); 
-        } else {
-            break; 
         }
     }
 }

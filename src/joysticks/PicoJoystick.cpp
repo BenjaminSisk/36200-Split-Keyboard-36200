@@ -75,8 +75,8 @@ void PicoJoystick::startTimer() {
 
 
 void PicoJoystick::update() {
+    // printf("[DEBUG] Joystick Update Triggered. Reading hardware...\n");
     // GUARD: If this is a virtual joystick (NO_PIN), skip hardware reads.
-    // This allows the TerminalEmulator's simulated values to persist!
     if (pin_x == hardwareMap::NO_PIN || pin_y == hardwareMap::NO_PIN) {
         return; 
     }
@@ -87,7 +87,7 @@ void PicoJoystick::update() {
     adc_select_input(adc_ch_y);
     uint16_t y_initial = adc_read();
 
-    is_pressed = !gpio_get(13); //!gpio_get(pin_sw);
+    is_pressed = !gpio_get(pin_sw); //!gpio_get(13);
     // printf("[DEBUG] Joystick Readings - Raw X: %d, Raw Y: %d, Pressed: %d\n", x_initial, y_initial, gpio_get(13));
 
     // Pipeline Transform

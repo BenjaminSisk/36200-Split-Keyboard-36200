@@ -59,6 +59,10 @@ private:
     struct repeating_timer keypadTimer;
     struct repeating_timer joystickTimer;
 
+        //nonblocking print
+    mutable uint32_t last_print_ms = 0; // 'mutable' allows modification in const functions
+    const uint32_t print_interval_ms = 50; // Print at 20fps (plenty fast for a terminal)
+
     // Static IRQ callbacks
     static bool keypadTimerCallback(struct repeating_timer *t);
     static bool joystickTimerCallback(struct repeating_timer *t);

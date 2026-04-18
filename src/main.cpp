@@ -369,8 +369,8 @@ void main1()
         {
             uint32_t key_press = multicore_fifo_pop_blocking();
             uint8_t id = (key_press >> 8) & 0xff;
-            // uint8_t action = (key_press) & 0xff;
-            // printf("id: %d, value: %d\n", id, key_press & 0xff);
+            uint8_t action = (key_press) & 0xff;
+            printf("id: %d, value: %d\n", id, action);
             struct Coord pos = {-1, -1};
             if (key2led.count(id))
             {
@@ -405,24 +405,38 @@ int main()
     init_uart_pins();
     init_uart_isr();
 
-    printf("\033[2J");
-    printf("System Initialized. Starting IRQs...\n");
-
     // Initialize using constructor delegation defaults
     // PicoJoystick joystick;
     // joystick.init(true);
     InputHandler inputHandler(hardwareMap::IS_LEFT_HALF);
     inputHandler.init();
 
+    // Let Core 1 finish its setup prints before we start spamming \r
+    sleep_ms(1500);
+    
+    printf("\033[2J");
+    printf("System Initialized. Starting main loop...\n");
+
+
+    // Create a non-blocking timer for polling inputs (5ms = 5000us)
+    uint32_t last_input_us = 0;
+    const uint32_t input_interval_us = 5000;
     // The main loop is now entirely decoupled from sensor polling latency
     while (true)
     {
+      uint32_t current_us = time_us_32();
 
-        inputHandler.update(); // Flushes the event queue to the FIFO, non-blocking
-        // Output visualization using the filtered data
+// 1. Rate-limit the input hardware polling
+        if (current_us - last_input_us >= input_interval_us) {
+            last_input_us = current_us;
+            inputHandler.update(); 
+
+            inputHandler.debugPrint(); // Unified debug print for all peripherals
+
+        }
+                // Output visualization using the filtered data
         // joystick.debugPrintSingleLine();
 
-        inputHandler.debugPrint(); // Unified debug print for all peripherals
 
         // This sleep no longer blocks sensor reading!
         tud_task(); // tinyusb device task
