@@ -14,6 +14,7 @@
 #include "keypadButtons.h"
 #include "PicoJoystick.h"
 #include "hardwareMap.h"
+#include <vector> // Add this at the top
 
 class InputHandler {
 public:
@@ -40,6 +41,9 @@ public:
      * Overwrites the previous line in the console using a carriage return.
      */
     void debugPrint() const;
+
+    std::vector<uint8_t> getActiveEquipmentIds() const;
+
 
 private:
     // Physical hardware components owned entirely by InputHandler

@@ -58,6 +58,7 @@ static auto key2led = Key2LED::loadFromJson("right_keymap.json");
 
 #include "usb_descriptors.h"
 
+
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
 //--------------------------------------------------------------------+
@@ -80,6 +81,36 @@ enum {
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 void hid_task(void);
+
+uint8_t mapEquipmentToHidCode(uint8_t equipmentId) {
+    // 1. Ask your new map for the ASCII character
+    char c = qwertyMap::getChar(equipmentId);
+
+    // 2. Handle standard lowercase letters mathematically
+    if (c >= 'a' && c <= 'z') {
+        // HID_KEY_A is the baseline. We just add the alphabetical offset!
+        // e.g., if c is 'c', ('c' - 'a') is 2. HID_KEY_A + 2 = HID_KEY_C.
+        return HID_KEY_A + (c - 'a'); 
+    }
+
+    // 3. Handle special characters and modifiers manually
+    switch (c) {
+        case '\n': return HID_KEY_ENTER;
+        case ' ':  return HID_KEY_SPACE;
+        case '[':  return HID_KEY_BRACKET_LEFT;
+        case '\\': return HID_KEY_BACKSLASH;
+        case ';':  return HID_KEY_SEMICOLON;
+        case '\'': return HID_KEY_APOSTROPHE;
+        case ',':  return HID_KEY_COMMA;
+        case '.':  return HID_KEY_PERIOD;
+        case '/':  return HID_KEY_SLASH;
+        
+        // Return 0 for '\0' (out of bounds) or unmapped slots
+        default:   return 0; 
+    }
+
+    //do joystick id maybe?? 
+}
 
 // Each "platform" (like the RP2350) must define its own board_init() function.
 // This comes from the datasheet's USB section: 

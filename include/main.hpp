@@ -11,6 +11,7 @@
 #include "key2led.hpp"
 
 #include "inputHandler.h"
+#include <quertyMap.h>
 
 /// @brief main core 1
 void main1();

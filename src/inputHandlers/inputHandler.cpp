@@ -144,3 +144,26 @@ void InputHandler::flushQueueToFifo() {
         }
     }
 }
+
+
+
+std::vector<uint8_t> InputHandler::getActiveEquipmentIds() const {
+    std::vector<uint8_t> activeIds;
+    
+    // Scan the entire matrix state
+    for (uint8_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
+        if (matrix.isKeyPressed(i)) {
+            // Translate the raw index back into Row/Col
+            uint8_t row = i / hardwareMap::COLS;
+            uint8_t col = i % hardwareMap::COLS;
+            
+            // Look up the mapped ID
+            uint8_t equipmentId = (*matrixMapping)[row][col];
+            
+            if (equipmentId != hardwareMap::NO_CONN) {
+                activeIds.push_back(equipmentId);
+            }
+        }
+    }
+    return activeIds;
+}

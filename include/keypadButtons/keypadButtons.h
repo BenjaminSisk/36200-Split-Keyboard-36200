@@ -13,6 +13,8 @@ using namespace std;
 
 class KeypadButtons {
 public:
+    // Add this simple getter
+    bool isKeyPressed(uint8_t index) const { return buttonState[index]; }
 
     //initializer
     //uses hardwareMap for all pin definitions, so no need to pass in pin vectors. 
