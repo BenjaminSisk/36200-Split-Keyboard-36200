@@ -1,3 +1,9 @@
+/**
+ * @file PicoJoystick.cpp
+ * @brief Implementation of PicoJoystick, which uses the ADC + smoothening and filtering to find the current positon
+ * of a joystick. 
+ */
+
 #include "PicoJoystick.h"
 #include <stdio.h>
 
@@ -39,22 +45,10 @@ void PicoJoystick::init(bool trigger) {
     gpio_set_dir(pin_sw, GPIO_IN);
     gpio_pull_up(pin_sw);
 
-    // for(;;) {
-    //     bool testing = gpio_get(pin_sw);
-    //     printf("[DEBUG] Joystick Switch State: %d\n", testing);
-    // }
-
-    //enables
-
-    //outputs
     if (trigger) {
-        startTimer(); // Start the timer immediately. 
+        startTimer(); 
     }
-
-
 }
-
-
 
 // Static wrapper to bridge C++ object instance with C-style hardware timer callback
 bool PicoJoystick::timerCallback(struct repeating_timer *t) {
@@ -70,12 +64,7 @@ void PicoJoystick::startTimer() {
     add_repeating_timer_ms(timer_interval_ms, timerCallback, this, &timer);
 }
 
-
-
-
-
 void PicoJoystick::update() {
-    // printf("[DEBUG] Joystick Update Triggered. Reading hardware...\n");
     // GUARD: If this is a virtual joystick (NO_PIN), skip hardware reads.
     if (pin_x == hardwareMap::NO_PIN || pin_y == hardwareMap::NO_PIN) {
         return; 
@@ -88,7 +77,6 @@ void PicoJoystick::update() {
     uint16_t y_initial = adc_read();
 
     is_pressed = !gpio_get(pin_sw); //!gpio_get(13);
-    // printf("[DEBUG] Joystick Readings - Raw X: %d, Raw Y: %d, Pressed: %d\n", x_initial, y_initial, gpio_get(13));
 
     // Pipeline Transform
     if (config.swap_xy) {
@@ -112,7 +100,6 @@ void PicoJoystick::update() {
     uint8_t current_x_8bit = static_cast<uint8_t>(x_current >> 4);
     uint8_t current_y_8bit = static_cast<uint8_t>(y_current >> 4);
 
-
     if (current_x_8bit > last_x_8bit + ADC_NOISE_THRESHOLD || current_x_8bit < last_x_8bit - ADC_NOISE_THRESHOLD) {
         last_x_8bit = current_x_8bit;
         if (onChangeCb) onChangeCb(Axis::X, current_x_8bit); // Fire with X enum
@@ -124,13 +111,9 @@ void PicoJoystick::update() {
     }
 }
 
-
-
 void PicoJoystick::setOnChange(std::function<void(Axis, uint8_t)> callback) {
     onChangeCb = callback;
 }
-
-
 
 //===================================================================================================================================
 //helpers:
@@ -141,9 +124,6 @@ void PicoJoystick::applyEMA(uint16_t x_initial, uint16_t y_initial) {
     x_current = (uint16_t)((ema_alpha * x_initial) + ((1.0f - ema_alpha) * x_current));
     y_current = (uint16_t)((ema_alpha * y_initial) + ((1.0f - ema_alpha) * y_current));
 }
-
-//getters / setters:
-
 
 uint16_t PicoJoystick::getX() const {
     return x_current; 
@@ -157,7 +137,6 @@ bool PicoJoystick::getPressed() const {
     return is_pressed;
 }
 
-// Setters
     
 void PicoJoystick::setPosition(uint16_t x, uint16_t y) {
     x_raw = x;

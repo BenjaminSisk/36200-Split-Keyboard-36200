@@ -9,12 +9,12 @@
 
 #include <cstdint>
 #include <queue>
+#include <vector> 
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "keypadButtons.h"
 #include "PicoJoystick.h"
 #include "hardwareMap.h"
-#include <vector> // Add this at the top
 
 class InputHandler {
 public:
@@ -23,11 +23,10 @@ public:
      * @param isLeftHalf True if this firmware is running on the left physical half.
      */
     InputHandler(bool isLeftHalf);    
+    
     /**
      * @brief Starts the hardware timers for ISR-based polling.
      */
-    void startHardwareTimers();
-
     void init(); // universal init
 
     /**
@@ -35,12 +34,15 @@ public:
      */
     void update();
 
-
     /**
      * @brief Prints a continuously updating, single-line debug state of all managed peripherals.
      * Overwrites the previous line in the console using a carriage return.
      */
     void debugPrint() const;
+
+    uint16_t getJoystickX() const;
+    uint16_t getJoystickY() const;
+    bool getJoystickPressed() const;
 
     std::vector<uint8_t> getActiveEquipmentIds() const;
 
@@ -59,17 +61,12 @@ private:
     // Pointer to the correct 2D mapping array in hardwareMap
     const std::array<std::array<uint8_t, hardwareMap::COLS>, hardwareMap::ROWS>* matrixMapping;    
     
-    // Hardware Timers for IRQ polling
-    struct repeating_timer keypadTimer;
-    struct repeating_timer joystickTimer;
+    uint32_t last_matrix_us   = 0;
+    uint32_t last_joystick_us = 0;
 
         //nonblocking print
     mutable uint32_t last_print_ms = 0; // 'mutable' allows modification in const functions
     const uint32_t print_interval_ms = 50; // Print at 20fps (plenty fast for a terminal)
-
-    // Static IRQ callbacks
-    static bool keypadTimerCallback(struct repeating_timer *t);
-    static bool joystickTimerCallback(struct repeating_timer *t);
 
     void handleKeyChange(uint8_t buttonIndex, bool isPressed);
 

@@ -8,7 +8,6 @@
 
 InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
     
-    // 1. Assign local identity based on the passed boolean
     if (isLeftHalf) {
         joyIdX = hardwareMap::LEFT_JOY_X_ID;
         joyIdY = hardwareMap::LEFT_JOY_Y_ID;
@@ -32,7 +31,6 @@ InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
         this->enqueueEvent(targetId, val); 
     });
 
-    //init variables
     last_print_ms = 0;
 
 }
@@ -40,34 +38,20 @@ InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
 void InputHandler::init() {
     matrix.init();
     joystick.init(false);
-
-    // printf("[inputHandler.cpp] InputHandler initialized. Starting hardware timers...\n");
-
-    // startHardwareTimers();
-}
-
-void InputHandler::startHardwareTimers() {
-    add_repeating_timer_us(-5000, keypadTimerCallback, this, &keypadTimer);  
-    add_repeating_timer_us(-10000, joystickTimerCallback, this, &joystickTimer); 
-}
-
-bool InputHandler::keypadTimerCallback(struct repeating_timer *t) {
-    InputHandler* instance = static_cast<InputHandler*>(t->user_data);
-    // printf("Keypad Timer IRQ Triggered. Instance pointer: %p\n", (void *)instance);
-    if (instance) instance->matrix.update();
-    return true; 
-}
-
-bool InputHandler::joystickTimerCallback(struct repeating_timer *t) {
-    InputHandler* instance = static_cast<InputHandler*>(t->user_data);
-    if (instance) instance->joystick.update();
-    return true; 
 }
 
 void InputHandler::update() {
+    uint32_t now = time_us_32();
 
-    matrix.update();
-    joystick.update();
+    if (now - last_matrix_us >= 5000) {
+        last_matrix_us = now;
+        matrix.update();
+    }
+
+    if (now - last_joystick_us >= 10000) {
+        last_joystick_us = now;
+        joystick.update();
+    }
 
     flushQueueToFifo();
 }
@@ -122,6 +106,10 @@ void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
     internalQueue.push(payload);
     restore_interrupts(ints); // Resume interrupts
 }
+
+uint16_t InputHandler::getJoystickX() const { return joystick.getX(); }
+uint16_t InputHandler::getJoystickY() const { return joystick.getY(); }
+bool InputHandler::getJoystickPressed() const { return joystick.getPressed(); }
 
 void InputHandler::flushQueueToFifo() {
     while (true) {

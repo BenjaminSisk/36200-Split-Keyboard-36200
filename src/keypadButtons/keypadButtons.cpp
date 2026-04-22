@@ -1,6 +1,6 @@
 /**
  * @file keypadButtons.cpp
- * @brief Implementation of the KeypadButtons driver.
+ * @brief Implementation of the KeypadButtons driver, used for the keyboard
  */
 
 #include "keypadButtons.h"
@@ -37,18 +37,14 @@ void KeypadButtons::init() {
 }
 
 void KeypadButtons::update() {
-    // Removed the time_us_32() check. We rely on the caller (IRQ) for timing.
     uint8_t totalCols = KEYBOARD_COL_PINS.size();
 
-    // printf("[DEBUG] Starting matrix scan...\n");
     for (size_t c = 0; c < KEYBOARD_COL_PINS.size(); c++) {
         if (KEYBOARD_COL_PINS[c] != hardwareMap::NO_PIN) {
             gpio_put(KEYBOARD_COL_PINS[c], 1);
-            busy_wait_us(2); //You cannot wait for an interrupt while you are actively inside an interrupt. T
+            busy_wait_us(2);
         }
 
-        // printf("[DEBUG] Scanning Column %d\n", c);
-        // printf("[DEBUG] Row 0 Col 0: %d...\n", gpio_get(KEYBOARD_ROW_PINS[0]));
         for (size_t r = 0; r < KEYBOARD_ROW_PINS.size(); r++) {
             if (KEYBOARD_ROW_PINS[r] == hardwareMap::NO_PIN) {
                 continue; 
@@ -59,17 +55,11 @@ void KeypadButtons::update() {
 
             if (isPressed != buttonState[index]) {
                 debounceCounters[index]++;
-
-                // printf("[DEBUG] Button Index %d state changed. Debounce Counter: %d\n", index, debounceCounters[index]);
                 
                 if (debounceCounters[index] >= DEBOUNCE_THRESHOLD) {
                     buttonState[index] = isPressed;
                     debounceCounters[index] = 0;
 
-                    // printf("[DEBUG] Matrix Index %d changed. Pressed: %d\n", index, isPressed);
-
-                    // WHAT: Fire the single unified callback, passing the state as an argument.
-                    // WHY: Consolidates the event pipeline.
                     if (onChangeCb) {
                         onChangeCb(index, isPressed);
                     }
@@ -110,16 +100,10 @@ void KeypadButtons::toString(char* buffer, size_t maxLength) const {
     for (size_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
         // '#' represents a pressed button, '-' represents released
         buffer[i] = buttonState[i] ? '#' : '-';
-
-        // if (buttonState[i]) {
-        //     last_id = i;
-        // }
     }
 
     buffer[hardwareMap::TOTAL_BUTTONS+1] = std::to_string(last_id).c_str()[0]; // Append the last pressed button index for easier debugging
     buffer[hardwareMap::TOTAL_BUTTONS+2] = std::to_string(last_id).c_str()[1]; // Append the last pressed button index for easier debugging
-
-    // Always manually null-terminate C-strings
     buffer[hardwareMap::TOTAL_BUTTONS] = '\0';
 }
 

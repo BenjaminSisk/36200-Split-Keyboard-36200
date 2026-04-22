@@ -1,12 +1,12 @@
 #pragma once
 
 #include <stdint.h>
+#include <functional>
+
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/timer.h"
 #include "hardwareMap.h"
-
-#include <functional>
 
 struct JoystickTransformConfig
 {
@@ -121,7 +121,6 @@ private:
      * @param callback Function 
      */
     std::function<void(Axis, uint8_t)> onChangeCb;
-
 
     // 8-bit State Tracking
     uint8_t last_x_8bit = 0;

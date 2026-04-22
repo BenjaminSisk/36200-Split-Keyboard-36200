@@ -19,16 +19,6 @@ namespace hardwareMap
 
     namespace Pins
     {
-        // Left Joystick
-        // constexpr uint8_t LEFT_JOY_SW = NO_PIN; //42;
-        // constexpr uint8_t LEFT_JOY_Y  = NO_PIN; //41;
-        // constexpr uint8_t LEFT_JOY_X  = NO_PIN; //40;
-
-        // // Right Joystick (Currently unconnected/virtual)
-        // constexpr uint8_t RIGHT_JOY_SW = NO_PIN;
-        // constexpr uint8_t RIGHT_JOY_Y  = NO_PIN;
-        // constexpr uint8_t RIGHT_JOY_X  = NO_PIN;
-
         // joysticks
         constexpr uint8_t JOYSTICK_SW = 13;
         constexpr uint8_t JOYSTICK_Y = 41;
@@ -62,13 +52,6 @@ namespace hardwareMap
         {12, 13, 14, 15, 16, 17}, // Row 2
         {18, 19, 20, 21, 22, 23}  // Row 3 (Thumbs)
     }};
-
-    // constexpr std::array<std::array<uint8_t, 6>, 4> BUTTON_POSITION_TO_ID_RIGHT = {{
-    //     {6, 7, 8, 9, 10, 11},       // Row 0
-    //     {18, 19, 20, 21, 22, 23},   // Row 1
-    //     {30, 31, 32, 33, 34, 35},   // Row 2
-    //     {255, 39, 40, 41, 255, 255} // Row 3 (Thumbs)
-    // }};
 
     // Standard Equipment IDs for Joysticks
     constexpr uint8_t LEFT_JOY_X_ID = 128;
