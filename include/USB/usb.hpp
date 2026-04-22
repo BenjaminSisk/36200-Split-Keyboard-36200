@@ -186,13 +186,9 @@ static void send_hid_report(uint8_t report_id, InputHandler& inputHandler) {
           if (hid_code != 0) keycodes[count++] = hid_code;
       }
 
-      if (count > 0) {
-          tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycodes);
-          has_keyboard_key = true;
-      } else if (has_keyboard_key) {
-          tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-          has_keyboard_key = false;
-      }
+      // Always send to keep the report chain alive so the mouse report fires every cycle.
+      tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, count > 0 ? keycodes : NULL);
+      has_keyboard_key = (count > 0);
       break;
     }
 
