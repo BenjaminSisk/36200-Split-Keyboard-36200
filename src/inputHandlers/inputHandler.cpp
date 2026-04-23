@@ -1,6 +1,5 @@
 /**
  * @file inputHandler.cpp
- * @brief Implementation of InputHandler configured for dynamic split-keyboard handedness.
  */
 #include "inputHandler.h"
 #include "hardware/sync.h"
@@ -8,6 +7,14 @@
 #include <uart_comm.h>
 
 InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
+    // 1. Initialize all states to unpressed (0)
+    equipmentState.fill(0);
+
+    // 2. Center the analog axes at ~127 to prevent extreme drift on boot
+    equipmentState[hardwareMap::LEFT_JOY_X_ID] = 127;
+    equipmentState[hardwareMap::LEFT_JOY_Y_ID] = 127;
+    equipmentState[hardwareMap::RIGHT_JOY_X_ID] = 127;
+    equipmentState[hardwareMap::RIGHT_JOY_Y_ID] = 127;
     
     if (isLeftHalf) {
         joyIdX = hardwareMap::LEFT_JOY_X_ID;
@@ -19,21 +26,16 @@ InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
         matrixMapping = &hardwareMap::BUTTON_POSITION_TO_ID;
     }
 
-    // WHAT: Bind the unified matrix callback.
-    // WHY: We map the boolean 'isPressed' state directly through to our new handler.
     matrix.setOnChange([this](uint8_t index, bool isPressed) { 
         this->handleKeyChange(index, isPressed); 
     });
 
-    // WHAT: Bind the unified joystick callback.
-    // WHY: We use a ternary operator to instantly resolve the correct ID based on the Axis enum.
     joystick.setOnChange([this](PicoJoystick::Axis axis, uint8_t val) { 
         uint8_t targetId = (axis == PicoJoystick::Axis::X) ? this->joyIdX : this->joyIdY;
         this->enqueueEvent(targetId, val); 
     });
 
     last_print_ms = 0;
-
 }
 
 void InputHandler::init() {
@@ -54,16 +56,11 @@ void InputHandler::update() {
         joystick.update();
     }
 
-                //receive information from bluetooth.
-                //right half is main
+    // Receive information from peripheral half via UART
     if (!hardwareMap::IS_LEFT_HALF) {
         uint8_t byte1, byte2;
         if (uart_read_pair(&byte1, &byte2)) {
-            printf("\n[Right half] Received Event - Equipment ID: %u, Action Value: %u\n",
-                   static_cast<unsigned int>(byte1),
-                   static_cast<unsigned int>(byte2));
-            // Here you can choose to either enqueue this event for Core 0 processing or handle it directly.
-            // For demonstration, let's enqueue it:
+            // Immediately merges remote data into the steady state array
             enqueueEvent(byte1, byte2);
         }
     }
@@ -71,87 +68,56 @@ void InputHandler::update() {
     flushQueueToFifo();
 }
 
-// WHAT: The new unified key handler.
-// WHY: We convert the 'isPressed' boolean into a 1 or 0 action value in a single line, 
-// eliminating the need for duplicate functions.
 void InputHandler::handleKeyChange(uint8_t buttonIndex, bool isPressed) {
     uint8_t row = buttonIndex / hardwareMap::COLS;
     uint8_t col = buttonIndex % hardwareMap::COLS;
-    
     uint8_t equipmentId = (*matrixMapping)[row][col];
     
     if (equipmentId != hardwareMap::NO_CONN) {
-        // Ternary operator: if isPressed is true, pass 1. Else, pass 0.
         enqueueEvent(equipmentId, isPressed ? 1 : 0);
     }
 }
 
-void InputHandler::debugPrint() const {
-    //nonblocking print
-
-    uint32_t current_ms = to_ms_since_boot(get_absolute_time());
-    if (current_ms - last_print_ms >= print_interval_ms) {
-        last_print_ms = current_ms;
-
-        char joyBuffer[80]; 
-        joystick.toString(joyBuffer, sizeof(joyBuffer));
-
-        // Get the string and pass its underlying C-string directly to printf
-        std::string keyString = matrix.toString(); 
-
-        // \r moves the cursor to the start of the line.
-        printf("\rSYS: [%s] | KEYS: [%s]        ", joyBuffer, keyString.c_str());
-        
-        // Force the console to output immediately
-        fflush(stdout);
-
-    } else {
-        return; // Skip this print to maintain the interval
-    }
-
-}
-
-
 void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
-    uint32_t payload = (static_cast<uint32_t>(equipmentId) << 8) | actionValue;
+    // 1. Update the steady state source of truth safely
+    equipmentState[equipmentId] = actionValue;
 
-    // printf("\n[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);
-    //update bluetooth:
-    //send information to bluetooth.
+    // 2. Dispatch to other half if this is the peripheral keyboard
     if (hardwareMap::IS_LEFT_HALF) {
-        printf("\n[LEFT HALF] Sending Event - Equipment ID: %u, Action Value: %u\n",
-               static_cast<unsigned int>(equipmentId),
-               static_cast<unsigned int>(actionValue));
         keyboard_uart_send(equipmentId, actionValue); 
     } 
 
-    // printf("[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);
-
-    // Pause interrupts to safely push to the queue
+    // 3. Enqueue for Core 1 (LED processing) safely
+    uint32_t payload = (static_cast<uint32_t>(equipmentId) << 8) | actionValue;
     uint32_t ints = save_and_disable_interrupts();
-
-    //update fullButtonState.
-    for (size_t r = 0; r < hardwareMap::ROWS; r++) {
-        for (size_t c = 0; c < hardwareMap::COLS*2; c++) {
-            uint8_t idx = r * hardwareMap::COLS*2 + c;
-            if (idx < hardwareMap::TOTAL_BUTTONS) {
-                fullButtonState[r][c] = matrix.isKeyPressed(idx);
-            } else if (equipmentId == hardwareMap::LEFT_JOY_SW_ID) {
-                fullButtonState[3][0] = (actionValue > 0); // Treat any non-zero value as "pressed"
-            } else if (equipmentId == hardwareMap::RIGHT_JOY_SW_ID) {
-                fullButtonState[3][11] = (actionValue > 0); // Treat any non-zero value as "pressed"
-            }
-        }
-    }
-
     internalQueue.push(payload);
-    restore_interrupts(ints); // Resume interrupts
+    restore_interrupts(ints); 
 }
 
-uint16_t InputHandler::getJoystickX() const { return joystick.getX(); }
-uint16_t InputHandler::getJoystickY() const { return joystick.getY(); }
-bool InputHandler::getJoystickPressed() const { 
-    return joystick.getPressed() | fullButtonState[3][0] | fullButtonState[3][11]; // Consider joystick button pressed if either the physical button or the corresponding matrix position is active
+uint8_t InputHandler::getEquipmentState(uint8_t equipmentId) const {
+    return equipmentState[equipmentId];
+}
+
+std::vector<uint8_t> InputHandler::getActiveEquipmentIds() const {
+    std::vector<uint8_t> activeIds;
+    
+    // Scan the absolute state array (safely avoids out of bounds)
+    for (size_t i = 0; i < 256; i++) {
+        // Skip IDs that belong to the analog joysticks or NO_CONN 
+        // to prevent HID keyboard from trying to type analog data
+        if (i == hardwareMap::NO_CONN || 
+            i == hardwareMap::LEFT_JOY_X_ID || i == hardwareMap::LEFT_JOY_Y_ID ||
+            i == hardwareMap::RIGHT_JOY_X_ID || i == hardwareMap::RIGHT_JOY_Y_ID ||
+            i == hardwareMap::LEFT_JOY_SW_ID || i == hardwareMap::RIGHT_JOY_SW_ID) {
+            continue; 
+        }
+        
+        if (equipmentState[i] > 0) {
+            activeIds.push_back(static_cast<uint8_t>(i));
+        }
+    }
+    
+    return activeIds;
 }
 
 void InputHandler::flushQueueToFifo() {
@@ -159,52 +125,61 @@ void InputHandler::flushQueueToFifo() {
         uint32_t payload;
         bool hasData = false;
 
-        // Pause interrupts to safely pop from the queue
         uint32_t ints = save_and_disable_interrupts();
         if (!internalQueue.empty()) {
             payload = internalQueue.front();
             internalQueue.pop();
             hasData = true;
         }
-        restore_interrupts(ints); // Resume interrupts
+        restore_interrupts(ints); 
         
-        if (!hasData) break; // Queue is empty, exit loop
+        if (!hasData) break; 
 
-
-        //send information to core 1 if it's ready to receive. If not, we will just drop this event to avoid blocking the main loop.
         if (multicore_fifo_wready()) {
             multicore_fifo_push_blocking(payload);
         }
     }
 }
 
+void InputHandler::debugPrint() const {
+    uint32_t current_ms = to_ms_since_boot(get_absolute_time());
+    if (current_ms - last_print_ms >= print_interval_ms) {
+        last_print_ms = current_ms;
 
+        // Grab the absolute array state for both joysticks directly from memory
+        uint8_t lx = equipmentState[hardwareMap::LEFT_JOY_X_ID];
+        uint8_t ly = equipmentState[hardwareMap::LEFT_JOY_Y_ID];
+        uint8_t lsw = equipmentState[hardwareMap::LEFT_JOY_SW_ID];
+        
+        uint8_t rx = equipmentState[hardwareMap::RIGHT_JOY_X_ID];
+        uint8_t ry = equipmentState[hardwareMap::RIGHT_JOY_Y_ID];
+        uint8_t rsw = equipmentState[hardwareMap::RIGHT_JOY_SW_ID];
 
-std::vector<uint8_t> InputHandler::getActiveEquipmentIds() const {
-    std::vector<uint8_t> activeIds;
-    
-    // Scan the entire matrix state
-    // for (uint8_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
-    //     if (matrix.isKeyPressed(i)) {
-    //         // Translate the raw index back into Row/Col
-    //         uint8_t row = i / hardwareMap::COLS;
-    //         uint8_t col = i % hardwareMap::COLS;
-            
-    //         // Look up the mapped ID
-    //         uint8_t equipmentId = (*matrixMapping)[row][col];
-            
-    //         if (equipmentId != hardwareMap::NO_CONN) {
-    //             activeIds.push_back(equipmentId);
-    //         }
-    //     }
-    // }
-    for (size_t r = 0; r < hardwareMap::ROWS; ++r) {
-        for (size_t c = 0; c < hardwareMap::COLS * 2; ++c) {
-            if (fullButtonState[r][c]) {
-                activeIds.push_back(static_cast<uint8_t>(r * (hardwareMap::COLS * 2) + c));
-            }
+        // Fetch keyboard IDs
+        std::vector<uint8_t> activeIds = getActiveEquipmentIds();
+        std::string activeIdStr = "";
+        for (uint8_t id : activeIds) {
+            activeIdStr += std::to_string(id) + " ";
         }
+        if (activeIdStr.empty()) activeIdStr = "NONE";
+
+        // Output a clean, single-line state
+        printf("\r[SYS] L_JOY(X:%3d Y:%3d SW:%d) | R_JOY(X:%3d Y:%3d SW:%d) | IDs: [%s]          ", 
+               lx, ly, lsw, rx, ry, rsw, activeIdStr.c_str());
+        fflush(stdout);
     }
-    
-    return activeIds;
+}
+
+void InputHandler::debugPrintOld() const {
+    uint32_t current_ms = to_ms_since_boot(get_absolute_time());
+    if (current_ms - last_print_ms >= print_interval_ms) {
+        last_print_ms = current_ms;
+
+        char joyBuffer[80]; 
+        joystick.toString(joyBuffer, sizeof(joyBuffer));
+        std::string keyString = matrix.toString(); 
+
+        printf("\r[SYS] %s | KEYS: [%s]", joyBuffer, keyString.c_str());
+        fflush(stdout);
+    }
 }

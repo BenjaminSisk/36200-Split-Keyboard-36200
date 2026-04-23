@@ -166,72 +166,90 @@ void tud_resume_cb(void) {
  * @param report_id    One of the REPORT_ID_* constants from usb_descriptors.h.
  * @param inputHandler Reference to the InputHandler for reading live key/joystick state.
  */
-static void send_hid_report(uint8_t report_id, InputHandler& inputHandler) {
-  // skip if hid is not ready yet
-  if (!tud_hid_ready()) {
-    return;
-  }
+static inline bool send_hid_report(uint8_t report_id, InputHandler& inputHandler) {
+  if (!tud_hid_ready()) return false;
+
+  bool report_sent = false;
 
   switch (report_id) {
     case REPORT_ID_KEYBOARD: {
-      // use to avoid send multiple consecutive zero report for keyboard
       static bool has_keyboard_key = false;
-
       std::vector<uint8_t> activeIds = inputHandler.getActiveEquipmentIds();
       uint8_t keycodes[6] = {0};
       uint8_t count = 0;
+      
       for (uint8_t id : activeIds) {
           if (count >= 6) break;
           uint8_t hid_code = mapEquipmentToHidCode(id);
           if (hid_code != 0) keycodes[count++] = hid_code;
       }
 
-      // Always send to keep the report chain alive so the mouse report fires every cycle.
-      tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, count > 0 ? keycodes : NULL);
-      has_keyboard_key = (count > 0);
+      if (count > 0) {
+          // Keys pressed: Send report
+          report_sent = tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycodes);
+          if (report_sent) has_keyboard_key = true;
+      } else if (has_keyboard_key) {
+          // Keys released: Send ONE empty report to clear the host state
+          report_sent = tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
+          if (report_sent) has_keyboard_key = false;
+      }
       break;
     }
 
     case REPORT_ID_MOUSE: {
-      tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, s_joy_x, s_joy_y, 0, 0);
-      break;
-    }
+      static bool has_mouse_state = false;
+      
+      // Map the joystick press to a standard Left Mouse Click
+      uint8_t mouse_buttons = s_joy_pressed ? MOUSE_BUTTON_LEFT : 0x00;
 
-    case REPORT_ID_CONSUMER_CONTROL: {
-      // Not yet implemented; sends empty report to keep the chain moving.
-      static bool has_consumer_key = false;
-      uint16_t empty_key = 0;
-      if (has_consumer_key) {
-        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &empty_key, 2);
-        has_consumer_key = false;
+      // If there is movement OR a click is held down, send the report
+      if (s_joy_x != 0 || s_joy_y != 0 || mouse_buttons != 0) {
+          report_sent = tud_hid_mouse_report(REPORT_ID_MOUSE, mouse_buttons, s_joy_x, s_joy_y, 0, 0);
+          if (report_sent) has_mouse_state = true;
+      } 
+      // If idle, but we previously sent a movement/click, send ONE empty report to release it
+      else if (has_mouse_state) {
+          report_sent = tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, 0, 0, 0, 0);
+          if (report_sent) has_mouse_state = false;
       }
       break;
     }
 
     case REPORT_ID_GAMEPAD: {
-      // use to avoid send multiple consecutive zero report for keyboard
       static bool has_gamepad_key = false;
-
       hid_gamepad_report_t report = {.x = 0, .y = 0, .z = 0, .rz = 0, .rx = 0, .ry = 0, .hat = 0, .buttons = 0};
-
       report.x = s_joy_x;
       report.y = s_joy_y;
-      if (s_joy_pressed) {
-          report.buttons |= GAMEPAD_BUTTON_A;
-      }
+      if (s_joy_pressed) report.buttons |= GAMEPAD_BUTTON_A;
 
       if (s_joy_x != 0 || s_joy_y != 0 || s_joy_pressed) {
-          tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
-          has_gamepad_key = true;
+          report_sent = tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
+          if (report_sent) has_gamepad_key = true;
       } else if (has_gamepad_key) {
-          tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
-          has_gamepad_key = false;
+          report_sent = tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
+          if (report_sent) has_gamepad_key = false;
       }
       break;
     }
 
-    default: break; // unknown report id
+    default: break; 
   }
+
+  return report_sent;
+}
+
+/**
+ * @brief Smartly advances the report chain. If a report has no data to send, 
+ * it skips it and attempts the next one so the pipeline doesn't stall.
+ */
+static inline void advance_report_chain(uint8_t start_report_id, InputHandler& inputHandler) {
+    for (uint8_t id = start_report_id; id < REPORT_ID_COUNT; id++) {
+        if (send_hid_report(id, inputHandler)) {
+            // Successfully queued to the endpoint. Stop looping.
+            // TinyUSB will call tud_hid_report_complete_cb when it's done transmitting.
+            return;
+        }
+    }
 }
 
 /**
@@ -240,37 +258,46 @@ static void send_hid_report(uint8_t report_id, InputHandler& inputHandler) {
  * of the chain (mouse, consumer, gamepad) is driven by tud_hid_report_complete_cb().
  * @param inputHandler Reference to the InputHandler for reading key and joystick state.
  */
-void hid_task(InputHandler& inputHandler) {
-  // Poll every 10ms
-  const uint32_t  interval_ms = 10;
-  static uint32_t start_ms    = 0;
+inline void hid_task(InputHandler& inputHandler) {
+  const uint32_t interval_ms = 10;
+  static uint32_t start_ms = 0;
 
-  if (to_ms_since_boot(get_absolute_time()) - start_ms < interval_ms) {
-    return; // not enough time
-  }
+  if (to_ms_since_boot(get_absolute_time()) - start_ms < interval_ms) return;
   start_ms += interval_ms;
 
-  // uint32_t const btn = !gpio_get(BOARD_BUTTON_PIN);
+  uint32_t const btn = !gpio_get(BOARD_BUTTON_PIN);
 
-  // Convert 12-bit joystick (0-4095, center=2048) to signed mouse deltas.
-  // Dead zone prevents cursor drift from ADC noise at rest.
-  const int16_t center      = 2048;
-  const int16_t dead_zone   = 200;
-  const int16_t sensitivity = 200;
-  int16_t rx = (int16_t)inputHandler.getJoystickX() - center;
-  int16_t ry = (int16_t)inputHandler.getJoystickY() - center;
-  s_joy_x       = (abs(rx) > dead_zone) ? (int8_t)(rx / sensitivity) : 0;
-  s_joy_y       = (abs(ry) > dead_zone) ? (int8_t)(ry / sensitivity) : 0;
-  s_joy_pressed = inputHandler.getJoystickPressed();
+  // 8-bit scale: Center is ~127.
+  const int16_t center = 127;
+  const int16_t dead_zone = 12; 
+  const int16_t sensitivity = 10;
 
-  // Remote wakeup
+  uint8_t joy_x_val = inputHandler.getEquipmentState(hardwareMap::RIGHT_JOY_X_ID);
+  uint8_t joy_y_val = inputHandler.getEquipmentState(hardwareMap::RIGHT_JOY_Y_ID);
+
+  if (abs((int16_t)joy_x_val - center) < dead_zone && abs((int16_t)joy_y_val - center) < dead_zone) {
+      joy_x_val = inputHandler.getEquipmentState(hardwareMap::LEFT_JOY_X_ID);
+      joy_y_val = inputHandler.getEquipmentState(hardwareMap::LEFT_JOY_Y_ID);
+  }
+
+  int16_t rx = (int16_t)joy_x_val - center;
+  int16_t ry = (int16_t)joy_y_val - center;
+  
+  s_joy_x = (abs(rx) > dead_zone) ? (int8_t)(rx / sensitivity) : 0;
+  s_joy_y = (abs(ry) > dead_zone) ? (int8_t)(ry / sensitivity) : 0;
+  
+  s_joy_pressed = (inputHandler.getEquipmentState(hardwareMap::LEFT_JOY_SW_ID) > 0) ||
+                  (inputHandler.getEquipmentState(hardwareMap::RIGHT_JOY_SW_ID) > 0);
+
   if (tud_suspended() && btn != 0u) {
     tud_remote_wakeup();
   } else {
-    // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_hid_report(REPORT_ID_KEYBOARD, inputHandler);
+    // Start the cascading report chain
+    advance_report_chain(REPORT_ID_KEYBOARD, inputHandler);
   }
 }
+
+
 
 /**
  * @brief TinyUSB callback: invoked after a HID report is successfully sent.
@@ -285,11 +312,11 @@ void tud_hid_report_complete_cb(uint8_t instance, uint8_t const *report, uint16_
 
   uint8_t next_report_id = report[0] + 1u;
 
-  if (next_report_id < REPORT_ID_COUNT) {
-    if (g_inputHandler) send_hid_report(next_report_id, *g_inputHandler);
+  if (next_report_id < REPORT_ID_COUNT && g_inputHandler) {
+      // Endpoint is free again. Move to the next report in the composite chain.
+      advance_report_chain(next_report_id, *g_inputHandler);
   }
 }
-
 /**
  * @brief TinyUSB callback: invoked on a GET_REPORT control request from the host.
  * @param instance    HID interface instance index.
@@ -345,3 +372,4 @@ void tud_hid_set_report_cb(
     }
   }
 }
+//qqqwwwwerrqqqwwqqweeiqqqqqwwqqw
