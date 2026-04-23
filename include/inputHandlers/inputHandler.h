@@ -61,6 +61,9 @@ private:
     // Pointer to the correct 2D mapping array in hardwareMap
     const std::array<std::array<uint8_t, hardwareMap::COLS>, hardwareMap::ROWS>* matrixMapping;    
     
+    std::array<std::array<bool, hardwareMap::COLS*2>, hardwareMap::ROWS> fullButtonState;    
+
+
     uint32_t last_matrix_us   = 0;
     uint32_t last_joystick_us = 0;
 

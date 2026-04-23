@@ -5,6 +5,7 @@
 #include "inputHandler.h"
 #include "hardware/sync.h"
 #include <cstdio>
+#include <uart_comm.h>
 
 InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
     
@@ -22,6 +23,7 @@ InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
     // WHY: We map the boolean 'isPressed' state directly through to our new handler.
     matrix.setOnChange([this](uint8_t index, bool isPressed) { 
         this->handleKeyChange(index, isPressed); 
+
     });
 
     // WHAT: Bind the unified joystick callback.
@@ -51,6 +53,17 @@ void InputHandler::update() {
     if (now - last_joystick_us >= 10000) {
         last_joystick_us = now;
         joystick.update();
+    }
+
+                //receive information from bluetooth.
+    if (!hardwareMap::IS_LEFT_HALF) {
+        uint8_t byte1, byte2;
+        if (uart_read_pair(&byte1, &byte2)) {
+            printf("[Right half] Received Event - Equipment ID: %d, Action Value: %d\n", byte1, byte2);
+            // Here you can choose to either enqueue this event for Core 0 processing or handle it directly.
+            // For demonstration, let's enqueue it:
+            enqueueEvent(byte1, byte2);
+        }
     }
 
     flushQueueToFifo();
@@ -103,13 +116,37 @@ void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
 
     // Pause interrupts to safely push to the queue
     uint32_t ints = save_and_disable_interrupts();
+
+    //update fullButtonState.
+    for (size_t r = 0; r < hardwareMap::ROWS; r++) {
+        for (size_t c = 0; c < hardwareMap::COLS*2; c++) {
+            uint8_t idx = r * hardwareMap::COLS*2 + c;
+            if (idx < hardwareMap::TOTAL_BUTTONS) {
+                fullButtonState[r][c] = matrix.isKeyPressed(idx);
+            } else if (equipmentId == hardwareMap::LEFT_JOY_SW_ID) {
+                fullButtonState[3][0] = (actionValue > 0); // Treat any non-zero value as "pressed"
+            } else if (equipmentId == hardwareMap::RIGHT_JOY_SW_ID) {
+                fullButtonState[3][11] = (actionValue > 0); // Treat any non-zero value as "pressed"
+            }
+        }
+    }
+
+    //update bluetooth:
+    //send information to bluetooth.
+    if (hardwareMap::IS_LEFT_HALF) {
+        printf("[LEFT HALF] Sending Event - Equipment ID: %d, Action Value: %d\n", (payload >> 8) & 0xff, payload & 0xff);
+        keyboard_uart_send((payload >> 8) & 0xff, payload & 0xff);
+    } 
+
     internalQueue.push(payload);
     restore_interrupts(ints); // Resume interrupts
 }
 
 uint16_t InputHandler::getJoystickX() const { return joystick.getX(); }
 uint16_t InputHandler::getJoystickY() const { return joystick.getY(); }
-bool InputHandler::getJoystickPressed() const { return joystick.getPressed(); }
+bool InputHandler::getJoystickPressed() const { 
+    return joystick.getPressed() | fullButtonState[3][0] | fullButtonState[3][11]; // Consider joystick button pressed if either the physical button or the corresponding matrix position is active
+}
 
 void InputHandler::flushQueueToFifo() {
     while (true) {
@@ -124,9 +161,11 @@ void InputHandler::flushQueueToFifo() {
             hasData = true;
         }
         restore_interrupts(ints); // Resume interrupts
-
+        
         if (!hasData) break; // Queue is empty, exit loop
 
+
+        //send information to core 1 if it's ready to receive. If not, we will just drop this event to avoid blocking the main loop.
         if (multicore_fifo_wready()) {
             multicore_fifo_push_blocking(payload);
         }
@@ -139,19 +178,27 @@ std::vector<uint8_t> InputHandler::getActiveEquipmentIds() const {
     std::vector<uint8_t> activeIds;
     
     // Scan the entire matrix state
-    for (uint8_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
-        if (matrix.isKeyPressed(i)) {
-            // Translate the raw index back into Row/Col
-            uint8_t row = i / hardwareMap::COLS;
-            uint8_t col = i % hardwareMap::COLS;
+    // for (uint8_t i = 0; i < hardwareMap::TOTAL_BUTTONS; i++) {
+    //     if (matrix.isKeyPressed(i)) {
+    //         // Translate the raw index back into Row/Col
+    //         uint8_t row = i / hardwareMap::COLS;
+    //         uint8_t col = i % hardwareMap::COLS;
             
-            // Look up the mapped ID
-            uint8_t equipmentId = (*matrixMapping)[row][col];
+    //         // Look up the mapped ID
+    //         uint8_t equipmentId = (*matrixMapping)[row][col];
             
-            if (equipmentId != hardwareMap::NO_CONN) {
-                activeIds.push_back(equipmentId);
+    //         if (equipmentId != hardwareMap::NO_CONN) {
+    //             activeIds.push_back(equipmentId);
+    //         }
+    //     }
+    // }
+    for (size_t r = 0; r < hardwareMap::ROWS; ++r) {
+        for (size_t c = 0; c < hardwareMap::COLS * 2; ++c) {
+            if (fullButtonState[r][c]) {
+                activeIds.push_back(static_cast<uint8_t>(r * (hardwareMap::COLS * 2) + c));
             }
         }
     }
+    
     return activeIds;
 }

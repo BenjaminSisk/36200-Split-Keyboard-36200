@@ -4,7 +4,7 @@
 
 namespace hardwareMap
 {
-    constexpr bool IS_LEFT_HALF = true; // Set to false for right half firmware builds. This can be used for conditional compilation if needed, but ideally the same codebase should work for both halves with the same pin definitions.
+    constexpr bool IS_LEFT_HALF = false; // Set to false for right half firmware builds. This can be used for conditional compilation if needed, but ideally the same codebase should work for both halves with the same pin definitions.
 
     // The constexpr specifier in C++ indicates that a variable or function can be evaluated at compile time. This shifts computations from runtime to compile time, which allows for performance optimizations, earlier bug detection via compile-time checks
     //  both halfs should use the same GPIO pins.
@@ -56,6 +56,8 @@ namespace hardwareMap
     // Standard Equipment IDs for Joysticks
     constexpr uint8_t LEFT_JOY_X_ID = 128;
     constexpr uint8_t LEFT_JOY_Y_ID = 129;
-    constexpr uint8_t RIGHT_JOY_X_ID = 130;
-    constexpr uint8_t RIGHT_JOY_Y_ID = 131;
+    constexpr uint8_t LEFT_JOY_SW_ID = 42;
+    constexpr uint8_t RIGHT_JOY_X_ID = 131;
+    constexpr uint8_t RIGHT_JOY_Y_ID = 132;
+    constexpr uint8_t RIGHT_JOY_SW_ID = 43;
 }
