@@ -18,7 +18,7 @@ volatile uint8_t last_valid_byte = 0;
 
 void init_uart_pins() {
     
-    uart_set_format(UART_ID0, 8, 1, UART_PARITY_EVEN);
+    uart_set_format(UART_ID0, 8, 1, UART_PARITY_NONE);
    
     uart_set_fifo_enabled(UART_ID0, false);
 
@@ -26,7 +26,7 @@ void init_uart_pins() {
     gpio_set_function(UART_TX1_PIN, UART_FUNCSEL_NUM(UART_ID1, UART_TX1_PIN));
     gpio_set_function(UART_RX1_PIN, UART_FUNCSEL_NUM(UART_ID1, UART_RX1_PIN));
         
-    uart_set_format(UART_ID1, 8, 1, UART_PARITY_EVEN);
+    uart_set_format(UART_ID1, 8, 1, UART_PARITY_NONE);
     uart_set_fifo_enabled(UART_ID1, false);
 }
 

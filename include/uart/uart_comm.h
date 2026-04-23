@@ -16,8 +16,8 @@
 #define UART_RX0_PIN 1
 
 #define UART_ID1 uart1
-#define UART_TX1_PIN 40
-#define UART_RX1_PIN 41
+#define UART_TX1_PIN 37
+#define UART_RX1_PIN 36
 
 #define BAUD_RATE 115200
 

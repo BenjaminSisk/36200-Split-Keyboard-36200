@@ -96,5 +96,5 @@ int main()
 
         tud_task();
         hid_task(inputHandler);
-    }
+    } 
 }

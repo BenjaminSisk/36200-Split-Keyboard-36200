@@ -23,7 +23,6 @@ InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
     // WHY: We map the boolean 'isPressed' state directly through to our new handler.
     matrix.setOnChange([this](uint8_t index, bool isPressed) { 
         this->handleKeyChange(index, isPressed); 
-
     });
 
     // WHAT: Bind the unified joystick callback.
@@ -56,10 +55,13 @@ void InputHandler::update() {
     }
 
                 //receive information from bluetooth.
+                //right half is main
     if (!hardwareMap::IS_LEFT_HALF) {
         uint8_t byte1, byte2;
         if (uart_read_pair(&byte1, &byte2)) {
-            printf("[Right half] Received Event - Equipment ID: %d, Action Value: %d\n", byte1, byte2);
+            printf("\n[Right half] Received Event - Equipment ID: %u, Action Value: %u\n",
+                   static_cast<unsigned int>(byte1),
+                   static_cast<unsigned int>(byte2));
             // Here you can choose to either enqueue this event for Core 0 processing or handle it directly.
             // For demonstration, let's enqueue it:
             enqueueEvent(byte1, byte2);
@@ -112,6 +114,17 @@ void InputHandler::debugPrint() const {
 
 void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
     uint32_t payload = (static_cast<uint32_t>(equipmentId) << 8) | actionValue;
+
+    // printf("\n[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);
+    //update bluetooth:
+    //send information to bluetooth.
+    if (hardwareMap::IS_LEFT_HALF) {
+        printf("\n[LEFT HALF] Sending Event - Equipment ID: %u, Action Value: %u\n",
+               static_cast<unsigned int>(equipmentId),
+               static_cast<unsigned int>(actionValue));
+        keyboard_uart_send(equipmentId, actionValue); 
+    } 
+
     // printf("[DEBUG] Enqueuing Event - Equipment ID: %d, Action Value: %d\n", equipmentId, actionValue);
 
     // Pause interrupts to safely push to the queue
@@ -130,13 +143,6 @@ void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
             }
         }
     }
-
-    //update bluetooth:
-    //send information to bluetooth.
-    if (hardwareMap::IS_LEFT_HALF) {
-        printf("[LEFT HALF] Sending Event - Equipment ID: %d, Action Value: %d\n", (payload >> 8) & 0xff, payload & 0xff);
-        keyboard_uart_send((payload >> 8) & 0xff, payload & 0xff);
-    } 
 
     internalQueue.push(payload);
     restore_interrupts(ints); // Resume interrupts

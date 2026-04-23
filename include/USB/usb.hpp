@@ -250,7 +250,7 @@ void hid_task(InputHandler& inputHandler) {
   }
   start_ms += interval_ms;
 
-  uint32_t const btn = !gpio_get(BOARD_BUTTON_PIN);
+  // uint32_t const btn = !gpio_get(BOARD_BUTTON_PIN);
 
   // Convert 12-bit joystick (0-4095, center=2048) to signed mouse deltas.
   // Dead zone prevents cursor drift from ADC noise at rest.
