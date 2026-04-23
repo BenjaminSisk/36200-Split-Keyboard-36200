@@ -76,8 +76,19 @@ void PicoJoystick::update() {
     adc_select_input(adc_ch_y);
     uint16_t y_initial = adc_read();
 
-    is_pressed = !gpio_get(pin_sw); //!gpio_get(13);
-
+    // --- Modular Switch Debouncing ---
+    bool current_raw_sw = !gpio_get(pin_sw);
+    if (current_raw_sw != last_raw_sw_state) {
+        sw_debounce_count++;
+        if (sw_debounce_count >= SW_DEBOUNCE_CYCLES) {
+            is_pressed = current_raw_sw;         // Commit the stable state
+            last_raw_sw_state = current_raw_sw;  // Update the baseline
+            sw_debounce_count = 0;               // Reset counter
+        }
+    } else {
+        sw_debounce_count = 0; // Reset if the switch bounces back to its old state
+    }
+    
     // Pipeline Transform
     if (config.swap_xy) {
         uint16_t temp = x_initial;

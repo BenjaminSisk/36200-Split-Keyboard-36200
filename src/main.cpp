@@ -76,9 +76,9 @@ int main()
     init_uart_pins();
     init_uart_isr();
 
-    InputHandler inputHandler(hardwareMap::IS_LEFT_HALF);
+    InputHandler inputHandler;
     inputHandler.init();
-    g_inputHandler = &inputHandler;
+    g_inputHandler = &inputHandler;wowopwopwopwopwopwopwopwopwopwopwopwopwopwopwop
 
     // Let Core 1 finish its setup prints before we start spamming \r
     sleep_ms(1500);

@@ -113,6 +113,11 @@ private:
     uint16_t y_current;
     bool is_pressed;
 
+    // --- Switch Debounce State ---
+    bool last_raw_sw_state = false;
+    uint8_t sw_debounce_count = 0;
+    const uint8_t SW_DEBOUNCE_CYCLES = 3; // Requires 3 stable polls to flip state
+
     struct repeating_timer timer;
     static const uint16_t ADC_MAX_VAL = 4095;
 

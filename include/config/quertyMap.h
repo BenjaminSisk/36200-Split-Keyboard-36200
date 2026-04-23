@@ -13,6 +13,7 @@ namespace qwertyMap {
         'z', 'x', 'c', 'v', 'b', 'n',   'm', ',', '.', '/', ' ', ' ',
         ' ', ' ', ' ', ' ', ' ', ' ',   ' ', ' ', ' ', ' ', ' ', ' ' // Thumbs and unused slots
     };
+    //uiopuuiop
 
     /**
      * @brief Safely fetches the character associated with a specific Equipment ID.

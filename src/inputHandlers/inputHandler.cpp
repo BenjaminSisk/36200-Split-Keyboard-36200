@@ -1,29 +1,29 @@
 /**
- * @file inputHandler.cpp
+ * @file inputHandler.cpp 
  */
 #include "inputHandler.h"
 #include "hardware/sync.h"
 #include <cstdio>
 #include <uart_comm.h>
 
-InputHandler::InputHandler(bool isLeftHalf) : matrix(), joystick() {
-    // 1. Initialize all states to unpressed (0)
+// Constructor no longer takes arguments
+InputHandler::InputHandler() : matrix(), joystick() {
     equipmentState.fill(0);
 
-    // 2. Center the analog axes at ~127 to prevent extreme drift on boot
     equipmentState[hardwareMap::LEFT_JOY_X_ID] = 127;
     equipmentState[hardwareMap::LEFT_JOY_Y_ID] = 127;
     equipmentState[hardwareMap::RIGHT_JOY_X_ID] = 127;
     equipmentState[hardwareMap::RIGHT_JOY_Y_ID] = 127;
     
-    if (isLeftHalf) {
-        joyIdX = hardwareMap::LEFT_JOY_X_ID;
-        joyIdY = hardwareMap::LEFT_JOY_Y_ID;
-        matrixMapping = &hardwareMap::BUTTON_POSITION_TO_ID;
+    // Rely solely on compile-time flag
+    if (hardwareMap::IS_LEFT_HALF) {
+        joyIdX  = hardwareMap::LEFT_JOY_X_ID;
+        joyIdY  = hardwareMap::LEFT_JOY_Y_ID;
+        joyIdSw = hardwareMap::LEFT_JOY_SW_ID;
     } else {
-        joyIdX = hardwareMap::RIGHT_JOY_X_ID;
-        joyIdY = hardwareMap::RIGHT_JOY_Y_ID;
-        matrixMapping = &hardwareMap::BUTTON_POSITION_TO_ID;
+        joyIdX  = hardwareMap::RIGHT_JOY_X_ID;
+        joyIdY  = hardwareMap::RIGHT_JOY_Y_ID;
+        joyIdSw = hardwareMap::RIGHT_JOY_SW_ID;
     }
 
     matrix.setOnChange([this](uint8_t index, bool isPressed) { 
@@ -54,13 +54,20 @@ void InputHandler::update() {
     if (now - last_joystick_us >= 10000) {
         last_joystick_us = now;
         joystick.update();
+        
+        // FIX 1: Explicitly poll the local switch state and push updates if it changes
+        bool sw_pressed = joystick.getPressed();
+        uint8_t sw_val = sw_pressed ? 1 : 0;
+        if (equipmentState[joyIdSw] != sw_val) {
+            enqueueEvent(joyIdSw, sw_val);
+        }
     }
 
-    // Receive information from peripheral half via UART
+
+
     if (!hardwareMap::IS_LEFT_HALF) {
         uint8_t byte1, byte2;
         if (uart_read_pair(&byte1, &byte2)) {
-            // Immediately merges remote data into the steady state array
             enqueueEvent(byte1, byte2);
         }
     }
@@ -71,12 +78,19 @@ void InputHandler::update() {
 void InputHandler::handleKeyChange(uint8_t buttonIndex, bool isPressed) {
     uint8_t row = buttonIndex / hardwareMap::COLS;
     uint8_t col = buttonIndex % hardwareMap::COLS;
-    uint8_t equipmentId = (*matrixMapping)[row][col];
+    
+    // FIX: Shift column index for the right half to read correctly from global matrixToId
+    if (!hardwareMap::IS_LEFT_HALF) {
+        col += 6; 
+    }
+    
+    uint8_t equipmentId = hardwareMap::matrixToId[row][col];
     
     if (equipmentId != hardwareMap::NO_CONN) {
         enqueueEvent(equipmentId, isPressed ? 1 : 0);
     }
 }
+
 
 void InputHandler::enqueueEvent(uint8_t equipmentId, uint8_t actionValue) {
     // 1. Update the steady state source of truth safely
@@ -183,3 +197,4 @@ void InputHandler::debugPrintOld() const {
         fflush(stdout);
     }
 }
+//

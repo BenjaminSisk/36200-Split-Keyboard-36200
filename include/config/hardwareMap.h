@@ -46,12 +46,12 @@ namespace hardwareMap
         {255, 36, 37, 38, 255, 255, 255, 39, 40, 41, 255, 255} // Row 3 (Thumbs)
     }};
 
-    constexpr std::array<std::array<uint8_t, 6>, 4> BUTTON_POSITION_TO_ID = {{
-        {0, 1, 2, 3, 4, 5},       // Row 0
-        {6, 7, 8, 9, 10, 11},     // Row 1
-        {12, 13, 14, 15, 16, 17}, // Row 2
-        {18, 19, 20, 21, 22, 23}  // Row 3 (Thumbs)
-    }};
+    // constexpr std::array<std::array<uint8_t, 6>, 4> BUTTON_POSITION_TO_ID = {{
+    //     {0, 1, 2, 3, 4, 5},       // Row 0
+    //     {6, 7, 8, 9, 10, 11},     // Row 1
+    //     {12, 13, 14, 15, 16, 17}, // Row 2
+    //     {18, 19, 20, 21, 22, 23}  // Row 3 (Thumbs)
+    // }};
 
     // Standard Equipment IDs for Joysticks
     constexpr uint8_t LEFT_JOY_X_ID = 128;

@@ -50,7 +50,10 @@ private:
     uint32_t lastUpdateUs;
     const uint32_t SCAN_INTERVAL_US = 5000;   // Scan the whole matrix every 5ms
     const uint8_t DEBOUNCE_THRESHOLD = 4;     // Requires 4 consecutive identical reads (20ms)
-    
+    uint8_t sw_debounce_counter = 0;
+    bool current_sw_state = false;
+
+
     array<bool, hardwareMap::TOTAL_BUTTONS> buttonState; // Final debounced state of each button
     array<uint8_t, hardwareMap::TOTAL_BUTTONS> debounceCounters;
 
