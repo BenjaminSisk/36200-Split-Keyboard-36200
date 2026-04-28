@@ -78,7 +78,7 @@ int main()
 
     InputHandler inputHandler;
     inputHandler.init();
-    g_inputHandler = &inputHandler;wowopwopwopwopwopwopwopwopwopwopwopwopwopwopwop
+    g_inputHandler = &inputHandler;
 
     // Let Core 1 finish its setup prints before we start spamming \r
     sleep_ms(1500);
