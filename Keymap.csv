@@ -1,0 +1,23 @@
+"Layer 0 - left side, left keypad",,,,"Layer 0 - left side, right keypad",,,,"Layer 0 - right side, left keypad",,,,"Layer 0 - right side, right keypad",,,
+No key,No key,Tab,Q,W,E,R,T,Y,U,I,O,P,Del,No key,No key
+No key,No key,Alt,A,S,D,F,G,H,J,K,L,,"AltGr (international keyboard, if possible)",No key,No key
+No key,No key,Shift,Z,X,C,V,B,N,M,",",.,/,Func,No key,No key
+No key,No key,No key,No key,Ctrl,Enter,Tab,Layer 3,Layer 1,Backspace,Space,Shift,No key,No key,No key,No key
+,,,,,,,,,,,,,,,
+"Layer 1 - left side, left keypad",,,,"Layer 1 - left side, right keypad",,,,"Layer 1 - right side, left keypad",,,,"Layer 1 - right side, right keypad",,,
+No key,No key,None,!,@,#,$,%,^,&,*,(,),None,No key,No key
+No key,No key,None,1,2,3,4,5,6,7,8,9,0,None,No key,No key
+No key,No key,None,None,~,,[,{,},],None,None,None,None,No key,No key
+No key,No key,No key,No key,None,None ,None,Layer 0,Layer 2,None,None,:,No key,No key,No key,No key
+,,,,,,,,,,,,,,,
+"Layer 2 - left side, left keypad",,,,"Layer 2 - left side, right keypad",,,,"Layer 2 - right side, left keypad",,,,"Layer 2 - right side, right keypad",,,
+No key,No key,None,Del,None,_,plus,PgUp,None,None,None,\,|,None,No key,No key
+No key,No key,None,Home,End,-,equals,PgOn,Left,Down,Up,Right,None,None,No key,No key
+No key,No key,None,<,>,Copy,Paste,;,Play/resume,Fast backward,Fast forward,Reduce volume,Increase volume,None,No key,No key
+No key,No key,No key,No key,Esc,Windows key,None,Layer 1,Layer 3,None,None,None,No key,No key,No key,No key
+,,,,,,,,,,,,,,,
+"Layer 3 - left side, left keypad",,,,"Layer 3 - left side, right keypad",,,,"Layer 3 - right side, left keypad",,,,"Layer 3 - right side, right keypad",,,
+No key,No key,None,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,None,No key,No key
+No key,No key,None,F11,F12,None,None,None,None,None,None,None,None,None,No key,No key
+No key,No key,None,Caps,None,None,None,None,None,None,None,None,Reset,None,No key,No key
+No key,No key,No key,No key,None,None,None,Layer 2,Layer 0,None,None,None,No key,No key,No key,No key

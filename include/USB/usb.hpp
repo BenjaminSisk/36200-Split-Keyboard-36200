@@ -35,33 +35,18 @@ static InputHandler* g_inputHandler = nullptr;
 void hid_task(InputHandler& inputHandler);
 
 /**
- * @brief Translates an equipment ID into the corresponding USB HID keycode.
- * @param equipmentId The equipment ID assigned in hardwareMap.
- * @return HID keycode (e.g. HID_KEY_A), or 0 if the ID has no mapping.
+ * @brief Returns the HID keycode for an equipment ID on the currently active layer.
  */
 uint8_t mapEquipmentToHidCode(uint8_t equipmentId) {
-    char c = qwertyMap::getChar(equipmentId);
+    return qwertyMap::getCode(equipmentId, qwertyMap::currentLayer);
+}
 
-    if (c >= 'a' && c <= 'z') {
-        // e.g., if c is 'c', ('c' - 'a') is 2. HID_KEY_A + 2 = HID_KEY_C.
-        return HID_KEY_A + (c - 'a'); 
-    }
-
-    switch (c) {
-        case '\n': return HID_KEY_ENTER;
-        case ' ':  return HID_KEY_SPACE;
-        case '[':  return HID_KEY_BRACKET_LEFT;
-        case '\\': return HID_KEY_BACKSLASH;
-        case ';':  return HID_KEY_SEMICOLON;
-        case '\'': return HID_KEY_APOSTROPHE;
-        case ',':  return HID_KEY_COMMA;
-        case '.':  return HID_KEY_PERIOD;
-        case '/':  return HID_KEY_SLASH;
-        
-        // Return 0 for '\0' (out of bounds) or unmapped slots
-        default:   return 0; 
-    }
-
+/**
+ * @brief Returns the HID modifier byte for an equipment ID on the currently active layer.
+ *        Non-zero only for keys that require Shift, Ctrl, etc. in the active layer.
+ */
+uint8_t mapEquipmentToHidModifier(uint8_t equipmentId) {
+    return qwertyMap::getModifier(equipmentId, qwertyMap::currentLayer);
 }
 
 /**
@@ -176,20 +161,22 @@ static inline bool send_hid_report(uint8_t report_id, InputHandler& inputHandler
       static bool has_keyboard_key = false;
       std::vector<uint8_t> activeIds = inputHandler.getActiveEquipmentIds();
       uint8_t keycodes[6] = {0};
+      uint8_t modifier_byte = 0;
       uint8_t count = 0;
-      
+
       for (uint8_t id : activeIds) {
-          if (count >= 6) break;
-          uint8_t hid_code = mapEquipmentToHidCode(id);
-          if (hid_code != 0) keycodes[count++] = hid_code;
+          modifier_byte |= mapEquipmentToHidModifier(id); // accumulate per-key modifiers
+          if (count < 6) {
+              uint8_t hid_code = mapEquipmentToHidCode(id);
+              if (hid_code != 0) keycodes[count++] = hid_code;
+          }
       }
 
-      if (count > 0) {
-          // Keys pressed: Send report
-          report_sent = tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycodes);
+      if (count > 0 || modifier_byte != 0) {
+          report_sent = tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier_byte, keycodes);
           if (report_sent) has_keyboard_key = true;
       } else if (has_keyboard_key) {
-          // Keys released: Send ONE empty report to clear the host state
+          // All keys released: send one empty report to clear host state
           report_sent = tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
           if (report_sent) has_keyboard_key = false;
       }
@@ -288,6 +275,20 @@ inline void hid_task(InputHandler& inputHandler) {
   
   s_joy_pressed = (inputHandler.getEquipmentState(hardwareMap::LEFT_JOY_SW_ID) > 0) ||
                   (inputHandler.getEquipmentState(hardwareMap::RIGHT_JOY_SW_ID) > 0);
+
+  // Toggle layer on rising edge of layer-cycle keys (IDs 45 and 46).
+  // Key 45 cycles down (0→3→2→1→0), key 46 cycles up (0→1→2→3→0).
+  {
+      static uint8_t prev_lp = 0, prev_ln = 0;
+      uint8_t cur_lp = inputHandler.getEquipmentState(hardwareMap::LAYER_PREV_ID);
+      uint8_t cur_ln = inputHandler.getEquipmentState(hardwareMap::LAYER_NEXT_ID);
+      if (cur_lp > 0 && prev_lp == 0)
+          qwertyMap::currentLayer = (qwertyMap::currentLayer + qwertyMap::NUM_LAYERS - 1) % qwertyMap::NUM_LAYERS;
+      if (cur_ln > 0 && prev_ln == 0)
+          qwertyMap::currentLayer = (qwertyMap::currentLayer + 1) % qwertyMap::NUM_LAYERS;
+      prev_lp = cur_lp;
+      prev_ln = cur_ln;
+  }
 
   if (tud_suspended() && btn != 0u) {
     tud_remote_wakeup();

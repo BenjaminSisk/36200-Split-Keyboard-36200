@@ -43,7 +43,8 @@ namespace hardwareMap
         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},                // Row 0
         {12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},      // Row 1
         {24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},      // Row 2
-        {255, 36, 37, 38, 255, 255, 255, 39, 40, 41, 255, 255} // Row 3 (Thumbs)
+        {255, 36, 37, 38,  44,  45,  46, 39, 40, 41, 255, 255} // Row 3 (Thumbs)
+        //              ^unoccupied  ^Ctrl ^Enter ^Tab ^LayPrev ^LayNext ^Bsp ^Spc ^Sft
     }};
 
     // Standard Equipment IDs for Joysticks
@@ -53,4 +54,9 @@ namespace hardwareMap
     constexpr uint8_t RIGHT_JOY_X_ID = 131;
     constexpr uint8_t RIGHT_JOY_Y_ID = 132;
     constexpr uint8_t RIGHT_JOY_SW_ID = 43;
+
+    // Layer cycle keys (thumb cluster inner positions, Row 3)
+    // Press to cycle one layer down (3→2→1→0→3) or up (0→1→2→3→0).
+    constexpr uint8_t LAYER_PREV_ID = 45;
+    constexpr uint8_t LAYER_NEXT_ID = 46;
 }
