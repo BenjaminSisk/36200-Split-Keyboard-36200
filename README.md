@@ -1,6 +1,7 @@
 # RP2350 Split Keyboard Firmware
 
 Richard Li, Ben Sisk, Conner Lu, Michael Wang 
+
 A modular, C++ based firmware for an RP2350-powered split keyboard. This project integrates multiple hardware subsystems into a unified, non-blocking architecture.
 
 ## Description
