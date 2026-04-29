@@ -216,7 +216,7 @@ void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y)
 
 void pattern_column_flash(float t, int x, int y)
 {
-    float decay = 0.975;
+    float decay = 0.99;
 
     for (int i = 0; i < NUM_STRIPS; i++)
     {
