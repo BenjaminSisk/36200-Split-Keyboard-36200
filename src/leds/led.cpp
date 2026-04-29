@@ -80,11 +80,8 @@ void led_strip::load_buffers()
     }
 }
 
-void led_strip::update()
+void led_strip::update(float ripple_time, float t)
 {
-    absolute_time_t now = get_absolute_time();
-    float t = to_us_since_boot(now) / 50000.0f;
-
     switch (mode)
     {
     case BREATHING:
@@ -100,7 +97,7 @@ void led_strip::update()
         pattern_traveling_wave(t, 48, 2);
         break;
     case RIPPLE:
-        pattern_ripple(t, 0.8, x, y);
+        pattern_ripple(t, ripple_time, 0.975, x, y);
         break;
     case COLUMN_FLASH:
         pattern_column_flash(t, x, y);
@@ -114,8 +111,10 @@ void led_strip::update()
     default:
         break;
     }
-    for(int i = 0; i < NUM_STRIPS; i++){
-        for(int j = 0; j < LEDS_PER_STRIP; j++){
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        for (int j = 0; j < LEDS_PER_STRIP; j++)
+        {
             leds[i][j].r *= 0.5;
             leds[i][j].g *= 0.5;
             leds[i][j].b *= 0.5;

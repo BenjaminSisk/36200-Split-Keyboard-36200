@@ -2,13 +2,6 @@
 
 #define DATAPIN0 25
 #define SPACING 10
-#define LEFT_OR_RIGHT 0 // left = 0, right = 1
-
-#if LEFT_OR_RIGHT == 0
-static auto key2led = Key2LED::loadFromJson("left_keymap.json");
-#else
-static auto key2led = Key2LED::loadFromJson("right_keymap.json");
-#endif
 
 void main1()
 {
@@ -25,7 +18,7 @@ void main1()
         printf("Instance pointer set to: %p\n", (void *)&(strips[i]));
 
         strips[i].set_base_color(0, 255, 0);
-        strips[i].set_pattern_mode(COMET);
+        strips[i].set_pattern_mode(RIPPLE);
 
         strips[i].init_pio();
         strips[i].init_dma();
@@ -35,25 +28,32 @@ void main1()
     printf("Initialization complete. Entering loop.\n");
 
     absolute_time_t target;
+    float press_time = 0;
 
     while (true)
     {
+        absolute_time_t now = get_absolute_time();
+        float t = to_us_since_boot(now) / 50000.0f;
+        strips[0].x = -1;
+        strips[0].y = -1;
+        uint8_t action = -1;
         if (multicore_fifo_rvalid())
         {
+            int temp = 0;
             uint32_t key_press = multicore_fifo_pop_blocking();
             uint8_t id = (key_press >> 8) & 0xff;
-            uint8_t action = (key_press) & 0xff;
-            printf("id: %d, value: %d\n", id, action);
-            struct Coord pos = {-1, -1};
-            if (key2led.count(id))
+            action = (key_press) & 0xff;
+            if (!hardwareMap::IS_LEFT_HALF)
+                temp = 6;
+            if (action == 0x01)
             {
-                pos = key2led[id];
+                strips[0].x = id % 12 - temp;
+                strips[0].y = id / 12;
             }
-            strips[0].x = pos.col;
-            strips[0].y = pos.row;
+            press_time = t;
         }
-        strips[0].update();
-        target = delayed_by_us(get_absolute_time(), 100);
+        strips[0].update(press_time, t);
+        target = delayed_by_us(get_absolute_time(), 5000);
         while (absolute_time_diff_us(get_absolute_time(), target) > 0)
         {
             tight_loop_contents();
@@ -66,7 +66,7 @@ int main()
     stdio_init_all();
     sleep_ms(500);
     multicore_launch_core1(main1);
-    
+
     board_init();
     tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE, .speed = TUSB_SPEED_AUTO};
     tusb_init(BOARD_TUD_RHPORT, &dev_init);
@@ -91,10 +91,7 @@ int main()
         inputHandler.debugPrint();
         // joystick.debugPrintSingleLine();
 
-
-
-
         tud_task();
         hid_task(inputHandler);
-    } 
+    }
 }

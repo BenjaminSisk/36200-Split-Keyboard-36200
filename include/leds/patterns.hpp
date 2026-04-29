@@ -55,7 +55,7 @@ void pattern_traveling_wave(float t, float L, float omega);
 /// @param t time since key press
 /// @param x
 /// @param y
-void pattern_ripple(float t, float decay, int x, int y);
+void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y);
 
 /// @brief rainbow column flash on key press
 /// @param t

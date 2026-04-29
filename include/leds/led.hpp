@@ -66,7 +66,7 @@ public:
     void load_buffers();
 
     /// @brief calculates new RGB values from pattern and loads into buffer
-    void update();
+    void update(float ripple_time, float t);
 
     /// @brief sends led strip buffer to pio to output
     void output_strip();

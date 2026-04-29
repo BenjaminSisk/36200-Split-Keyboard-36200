@@ -1,6 +1,7 @@
 #include "patterns.hpp"
 
 RGB leds[NUM_STRIPS][LEDS_PER_STRIP];
+float shadow_leds[NUM_STRIPS][LEDS_PER_STRIP][3];
 
 void init_led()
 {
@@ -12,6 +13,10 @@ void init_led()
                 .r = 0,
                 .g = 0,
                 .b = 0};
+
+            shadow_leds[i][j][0] = 0.000; // Red
+            shadow_leds[i][j][1] = 0.000; // Green
+            shadow_leds[i][j][2] = 0.000; // Blue
         }
     }
 }
@@ -145,66 +150,134 @@ void pattern_traveling_wave(float t, float L, float omega)
 }
 
 //
-void pattern_ripple(float t, float decay, int x, int y)
+void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y)
 {
+    float global_decay = 0.975;
+
+    // 1. Apply global decay to all pixels first
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
         {
-            // get hue for rainbow
-            uint8_t hue = (uint8_t)(t + (j * 10)) % 256;
+            shadow_leds[i][j][0] *= global_decay;
+            shadow_leds[i][j][1] *= global_decay;
+            shadow_leds[i][j][2] *= global_decay;
 
-            hue_to_rgb(hue, i, j);
+            leds[i][j].r = (uint8_t)shadow_leds[i][j][0];
+            leds[i][j].g = (uint8_t)shadow_leds[i][j][1];
+            leds[i][j].b = (uint8_t)shadow_leds[i][j][2];
+        }
+    }
 
-            // calculate distance from key press
-            float distance = pow(pow(i - y, 2) + pow(j - x, 2), 0.5);
+    if (x < 0 || y < 0)
+        return;
 
-            // add decay the longer the key has not been pressed
-            leds[i][j].r *= fmax(0, 255 - decay * fabs(distance));
-            leds[i][j].g *= fmax(0, 255 - decay * fabs(distance));
-            leds[i][j].b *= fmax(0, 255 - decay * fabs(distance));
+    // Adjust speed_multiplier to control expansion rate.
+    // If t is in seconds, 5.000 means the ripple moves 5 LEDs per second.
+    float speed_multiplier = 5.000;
+    float current_radius = t * speed_multiplier;
+
+    // 2. Calculate the moving ripple effect
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        for (int j = 0; j < LEDS_PER_STRIP; j++)
+        {
+            float distance = pow(pow(i - y, 2) + pow(j - x, 2), 0.500);
+
+            // delta is the distance between the pixel and the moving wave front
+            float delta = fabs(distance - current_radius);
+
+            // The ripple only lights up pixels near the current_radius
+            float brightness = fmax(0.000, 255.000 - (decay_val * delta));
+
+            if (brightness > 0)
+            {
+                uint8_t hue = (uint8_t)(t + (j * 10)) % 256;
+                hue_to_rgb(hue, i, j);
+
+                float r_val = (leds[i][j].r * brightness) / 255.000;
+                float g_val = (leds[i][j].g * brightness) / 255.000;
+                float b_val = (leds[i][j].b * brightness) / 255.000;
+
+                if (r_val > shadow_leds[i][j][0])
+                    shadow_leds[i][j][0] = r_val;
+                if (g_val > shadow_leds[i][j][1])
+                    shadow_leds[i][j][1] = g_val;
+                if (b_val > shadow_leds[i][j][2])
+                    shadow_leds[i][j][2] = b_val;
+
+                leds[i][j].r = (uint8_t)shadow_leds[i][j][0];
+                leds[i][j].g = (uint8_t)shadow_leds[i][j][1];
+                leds[i][j].b = (uint8_t)shadow_leds[i][j][2];
+            }
         }
     }
 }
 
 void pattern_column_flash(float t, int x, int y)
 {
-    float decay = 0.95;
-
-    for (int i = 0; i < NUM_STRIPS; i++)
-    {
-        // The 'y' offset ensures the rainbow is centered around the press
-        uint8_t hue = (uint8_t)((i * 40) + (t * 100) + (y * 20)) % 256;
-
-        // Convert to RGB with the decay applied to the 'Value' (Brightness)
-        hue_to_rgb(hue, i, x);
-        leds[i][x].r *= decay;
-        leds[i][x].g *= decay;
-        leds[i][x].b *= decay;
-    }
-}
-
-void pattern_heat_map(int x, int y)
-{
-    int decay = 0.975;
+    float decay = 0.975;
 
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
         {
-            uint8_t hue = i == x && j == y ? 255 : (int)get_hue(x, y);
+            shadow_leds[i][j][0] *= decay;
+            shadow_leds[i][j][1] *= decay;
+            shadow_leds[i][j][2] *= decay;
 
-            // Convert to RGB with the decay applied to the 'Value' (Brightness)
-            hue_to_rgb(hue, i, x);
-            leds[i][j].r *= decay;
-            leds[i][j].g *= decay;
-            leds[i][j].b *= decay;
+            leds[i][j].r = (uint8_t)shadow_leds[i][j][0];
+            leds[i][j].g = (uint8_t)shadow_leds[i][j][1];
+            leds[i][j].b = (uint8_t)shadow_leds[i][j][2];
         }
     }
+
+    if (x < 0 || y < 0)
+        return;
+
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        uint8_t hue = (uint8_t)((i * 40) + (t * 100) + (y * 20)) % 256;
+
+        hue_to_rgb(hue, i, x);
+
+        shadow_leds[i][x][0] = (float)leds[i][x].r;
+        shadow_leds[i][x][1] = (float)leds[i][x].g;
+        shadow_leds[i][x][2] = (float)leds[i][x].b;
+    }
+}
+
+void pattern_heat_map(int x, int y)
+{
+    float decay_factor = 0.975;
+
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        for (int j = 0; j < LEDS_PER_STRIP; j++)
+        {
+            shadow_leds[i][j][0] *= decay_factor;
+            shadow_leds[i][j][1] *= decay_factor;
+            shadow_leds[i][j][2] *= decay_factor;
+
+            leds[i][j].r = (uint8_t)shadow_leds[i][j][0];
+            leds[i][j].g = (uint8_t)shadow_leds[i][j][1];
+            leds[i][j].b = (uint8_t)shadow_leds[i][j][2];
+        }
+    }
+
+    if (x < 0 || y < 0)
+        return;
+
+    shadow_leds[y][x][0] = 120.000; // Red
+    shadow_leds[y][x][1] = 120.000; // Green
+    shadow_leds[y][x][2] = 120.000; // Blue
 }
 
 void pattern_christmas(int x, int y)
 {
+    if (x < 0 || y < 0)
+        return;
+
     float decay = 0.975;
 
     std::random_device rd;
