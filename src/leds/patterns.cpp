@@ -174,8 +174,8 @@ void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y)
 
     // Adjust speed_multiplier to control expansion rate.
     // If t is in seconds, 5.000 means the ripple moves 5 LEDs per second.
-    float speed_multiplier = 5.000;
-    float current_radius = t * speed_multiplier;
+    float speed_multiplier = 0.1;
+    float current_radius = (t - ripple_time) * speed_multiplier / 10000000000000000;
 
     // 2. Calculate the moving ripple effect
     for (int i = 0; i < NUM_STRIPS; i++)
