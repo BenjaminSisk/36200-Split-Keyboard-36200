@@ -123,7 +123,7 @@ namespace qwertyMap {
         //   A=1  S=2  D=3  F=4  G=5  H=6  J=7  K=8  L=9  '=0
         //   X=~  C='  V=[  B={  N=}  M=]
         //   Right-thumb Sft position → : (colon, Shift+; via modifiers[])
-        {{  K_NONE, K_1,    K_2,    K_3,    K_4,    K_5,    K_6,    K_7,    K_8,    K_9,    K_0,    K_NONE,
+        {{  K_TAB,  K_1,    K_2,    K_3,    K_4,    K_5,    K_6,    K_7,    K_8,    K_9,    K_0,    K_DEL,
             K_NONE, K_1,    K_2,    K_3,    K_4,    K_5,    K_6,    K_7,    K_8,    K_9,    K_0,    K_NONE,
             K_NONE, K_NONE, K_GRV,  K_QUOT, K_LBRK, K_LBRK, K_RBRK, K_RBRK, K_NONE, K_NONE, K_NONE, K_NONE,
             K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_SEMI, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE }},
@@ -134,7 +134,7 @@ namespace qwertyMap {
         //   A=Home  S=End  D=-  F==  G=PgDn  H=←  J=↓  K=↑  L=→
         //   Z=<  X=>  C=Copy(Ctrl+C)  V=Paste(Ctrl+V)  B=;
         //   N-,=media stubs   Ctrl-thumb=Esc  Enter-thumb=Win(GUI)
-        {{  K_NONE, K_DEL,  K_NONE, K_MINUS,K_EQL,  K_PGUP, K_NONE, K_NONE, K_NONE, K_BSLS, K_BSLS, K_NONE,
+        {{  K_TAB,  K_DEL,  K_NONE, K_MINUS,K_EQL,  K_PGUP, K_NONE, K_NONE, K_NONE, K_BSLS, K_BSLS, K_DEL,
             K_NONE, K_HOME, K_END,  K_MINUS,K_EQL,  K_PGDN, K_ARTL, K_ARTD, K_ARTU, K_ARTR, K_NONE, K_NONE,
             K_NONE, K_COMM, K_DOT,  K_C,    K_V,    K_SEMI, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE,
             K_NONE, K_ESC,  K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE }},
@@ -144,7 +144,7 @@ namespace qwertyMap {
         //   Q=F1  W=F2  E=F3  R=F4  T=F5  Y=F6  U=F7  I=F8  O=F9  P=F10
         //   A=F11  S=F12
         //   Z=CapsLock   /=Reset(stub)
-        {{  K_NONE, K_F1,   K_F2,   K_F3,   K_F4,   K_F5,   K_F6,   K_F7,   K_F8,   K_F9,   K_F10,  K_NONE,
+        {{  K_TAB,  K_F1,   K_F2,   K_F3,   K_F4,   K_F5,   K_F6,   K_F7,   K_F8,   K_F9,   K_F10,  K_DEL,
             K_NONE, K_F11,  K_F12,  K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE,
             K_NONE, K_CAPS, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE,
             K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE }}
@@ -170,8 +170,8 @@ namespace qwertyMap {
         // IDs 29,30 → Shift ({ = Shift+[, } = Shift+])
         // ID 41 → Shift (: = Shift+;)
         {{ M_NONE, M_LSFT, M_LSFT, M_LSFT, M_LSFT, M_LSFT, M_LSFT, M_LSFT, M_LSFT, M_LSFT, M_LSFT, M_NONE,
-           M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
-           M_NONE, M_NONE, M_LSFT, M_NONE, M_NONE, M_LSFT, M_LSFT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
+           M_LALT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_LCTL,
+           M_LSFT, M_NONE, M_LSFT, M_NONE, M_NONE, M_LSFT, M_LSFT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
            M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_LSFT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE }},
 
         // Layer 2: _ + | < > need Shift; Copy/Paste need Ctrl; Win key uses LGUI modifier
@@ -180,14 +180,14 @@ namespace qwertyMap {
         // ID 27 → Ctrl (Copy) ID 28 → Ctrl (Paste)
         // ID 38 → LGUI (Windows key)
         {{ M_NONE, M_NONE, M_NONE, M_LSFT, M_LSFT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_LSFT, M_NONE,
-           M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
-           M_NONE, M_LSFT, M_LSFT, M_LCTL, M_LCTL, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
+           M_LALT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_LCTL,
+           M_LSFT, M_LSFT, M_LSFT, M_LCTL, M_LCTL, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
            M_NONE, M_NONE, M_LGUI, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE }},
 
-        // Layer 3: no modifiers
+        // Layer 3: Alt/Shift/Ctrl column keys persist; F-keys have no modifiers
         {{ M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
-           M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
-           M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
+           M_LALT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_LCTL,
+           M_LSFT, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE,
            M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE, M_NONE }}
     }};
 
