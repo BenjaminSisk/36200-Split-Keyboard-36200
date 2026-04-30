@@ -72,9 +72,9 @@ void main1()
 
         prev_time = t;
         current_mode = (mode)((current_mode + 1) % 10);
-        r_color = (r_color + 30) % 256;
-        g_color = (g_color + 30) % 256;
-        b_color = (b_color + 30) % 256;
+        r_color = (r_color + 40) % 256;
+        g_color = (g_color + 70) % 256;
+        b_color = (b_color + 100) % 256;
 
         for (int i = 0; i < NUM_STRIPS; i++)
         {
