@@ -83,9 +83,9 @@ void pattern_sine_glow(float t, int r, int g, int b)
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
         {
-            leds[i][j].r = r * (sin(t / 10 + j * 0.5) + 1) / 2;
-            leds[i][j].g = g * (sin(t / 10 + j * 0.5) + 1) / 2;
-            leds[i][j].b = b * (sin(t / 10 + j * 0.5) + 1) / 2;
+            leds[i][j].r = r * (sin(t + j * 0.5) + 1) / 2;
+            leds[i][j].g = g * (sin(t + j * 0.5) + 1) / 2;
+            leds[i][j].b = b * (sin(t + j * 0.5) + 1) / 2;
         }
     }
 }
@@ -124,7 +124,7 @@ void pattern_rainbow_linear(float t, float spatial_freq)
         for (int j = 0; j < LEDS_PER_STRIP; j++)
         {
             // Formula: Hue = (Time_Offset + (Position * Density)) % 256
-            uint8_t hue = (uint8_t)(t + (j * spatial_freq) + 10 * i) % 256;
+            uint8_t hue = (uint8_t)(t * 10 + (j * spatial_freq) + 10 * i) % 256;
 
             hue_to_rgb(hue, i, j);
         }
@@ -216,7 +216,7 @@ void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y)
 
 void pattern_column_flash(float t, int x, int y)
 {
-    float decay = 0.995;
+    float decay = 0.975;
 
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -249,7 +249,7 @@ void pattern_column_flash(float t, int x, int y)
 
 void pattern_heat_map(int x, int y)
 {
-    float decay_factor = 0.975;
+    float decay_factor = 0.99;
     // Static 2D array to track the hue for every individual LED/key
     static float individual_hues[NUM_STRIPS][LEDS_PER_STRIP];
 
@@ -280,9 +280,9 @@ void pattern_heat_map(int x, int y)
     // Convert the specific hue for this key to RGB
     hue_to_rgb((uint8_t)individual_hues[y][x], y, x);
 
-    shadow_leds[y][x][0] = (float)leds[y][x].r;
-    shadow_leds[y][x][1] = (float)leds[y][x].g;
-    shadow_leds[y][x][2] = (float)leds[y][x].b;
+    shadow_leds[y][x][0] = (float)leds[y][x].r * 0.6;
+    shadow_leds[y][x][1] = (float)leds[y][x].g * 0.6;
+    shadow_leds[y][x][2] = (float)leds[y][x].b * 0.6;
 }
 
 void pattern_christmas(int x, int y)
@@ -292,7 +292,7 @@ void pattern_christmas(int x, int y)
     // Static initialization prevents re-seeding the generator every function call
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, 1279);
+    std::uniform_int_distribution<int> dist(0, 5000); // decrease distribution range to increase flashing speeds
 
     for (int s = 0; s < NUM_STRIPS; s++)
     {
@@ -327,4 +327,128 @@ void pattern_christmas(int x, int y)
 
     if (x < 0 || y < 0)
         return;
+}
+
+void pattern_glitch_rain(float t, int x, int y)
+{
+    // Increased decay factor so the tail lasts long enough to reach bottom rows
+    float decay_factor = 0.985;
+    static float last_drop_time = 0.000;
+
+    // 1. Decay logic
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        for (int j = 0; j < LEDS_PER_STRIP; j++)
+        {
+            shadow_leds[i][j][0] *= decay_factor;
+            shadow_leds[i][j][1] *= decay_factor;
+            shadow_leds[i][j][2] *= decay_factor;
+
+            leds[i][j].r = (uint8_t)shadow_leds[i][j][0];
+            leds[i][j].g = (uint8_t)shadow_leds[i][j][1];
+            leds[i][j].b = (uint8_t)shadow_leds[i][j][2];
+        }
+    }
+
+    // 2. Timing logic
+    if (t - last_drop_time > 10.000)
+    {
+        last_drop_time = t;
+
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> col_dist(0, LEDS_PER_STRIP - 1);
+        std::uniform_int_distribution<int> hue_dist(120, 180);
+
+        // 3. Shift pixels "down"
+        for (int i = NUM_STRIPS - 1; i > 0; i--)
+        {
+            for (int j = 0; j < LEDS_PER_STRIP; j++)
+            {
+                int glitch_roll = std::uniform_int_distribution<int>(0, 100)(gen);
+                int target_col = j;
+
+                if (glitch_roll < 5)
+                {
+                    target_col = (j + 1) % LEDS_PER_STRIP;
+                }
+
+                shadow_leds[i][target_col][0] = shadow_leds[i - 1][j][0];
+                shadow_leds[i][target_col][1] = shadow_leds[i - 1][j][1];
+                shadow_leds[i][target_col][2] = shadow_leds[i - 1][j][2];
+            }
+        }
+
+        // 4. Create new drops at the top
+        for (int k = 0; k < 2; k++)
+        {
+            int random_col = col_dist(gen);
+            uint8_t random_hue = (uint8_t)hue_dist(gen);
+
+            if (x >= 0 && y >= 0)
+            {
+                random_hue = (uint8_t)((random_hue + 100) % 256);
+            }
+
+            hue_to_rgb(random_hue, 0, random_col);
+
+            shadow_leds[0][random_col][0] = (float)leds[0][random_col].r;
+            shadow_leds[0][random_col][1] = (float)leds[0][random_col].g;
+            shadow_leds[0][random_col][2] = (float)leds[0][random_col].b;
+        }
+    }
+}
+
+void pattern_heat_wave(float t, int x, int y)
+{
+    float decay_factor = 0.920;
+
+    // 1. Decay and Shift
+    // We shift pixels to the right to create a "wave" motion
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        for (int j = LEDS_PER_STRIP - 1; j >= 0; j--)
+        {
+            // Apply decay
+            shadow_leds[i][j][0] *= decay_factor;
+            shadow_leds[i][j][1] *= decay_factor;
+            shadow_leds[i][j][2] *= decay_factor;
+
+            // Shift data from the left
+            if (j > 0)
+            {
+                shadow_leds[i][j][0] = shadow_leds[i][j - 1][0] * 0.990;
+                shadow_leds[i][j][1] = shadow_leds[i][j - 1][1] * 0.990;
+                shadow_leds[i][j][2] = shadow_leds[i][j - 1][2] * 0.990;
+            }
+
+            leds[i][j].r = (uint8_t)shadow_leds[i][j][0];
+            leds[i][j].g = (uint8_t)shadow_leds[i][j][1];
+            leds[i][j].b = (uint8_t)shadow_leds[i][j][2];
+        }
+    }
+
+    // 2. Wave Generation
+    // We use sin() based on time (t in 0.05s units) to pulse the first column
+    for (int i = 0; i < NUM_STRIPS; i++)
+    {
+        // t / 5.000 controls the speed of the wave oscillation
+        // i * 0.500 offsets the wave for each strip (the 'diagonal' look)
+        float wave = sin((t / 5.000) + (i * 0.800));
+
+        // Map sine (-1 to 1) to hue range (0 to 40 for fire colors)
+        uint8_t hue = (uint8_t)(20.000 + (wave * 20.000));
+
+        // If a button is pressed, significantly shift the hue to "cool" the wave
+        if (x >= 0 && y >= 0)
+        {
+            hue = (uint8_t)(hue + 120) % 256;
+        }
+
+        hue_to_rgb(hue, i, 0);
+
+        shadow_leds[i][0][0] = (float)leds[i][0].r;
+        shadow_leds[i][0][1] = (float)leds[i][0].g;
+        shadow_leds[i][0][2] = (float)leds[i][0].b;
+    }
 }

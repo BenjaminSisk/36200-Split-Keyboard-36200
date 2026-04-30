@@ -18,8 +18,7 @@ void main1()
         printf("Instance pointer set to: %p\n", (void *)&(strips[i]));
 
         strips[i].set_base_color(0, 255, 0);
-        strips[i].set_pattern_mode(CHRISTMAS);
-
+        strips[i].set_pattern_mode(COLUMN_FLASH);
         strips[i].init_pio();
         strips[i].init_dma();
         strips[i].init_timer();
@@ -29,34 +28,51 @@ void main1()
 
     absolute_time_t target;
     float press_time = 0;
+    float prev_time = 0;
+
+    mode current_mode = BREATHING;
 
     while (true)
     {
         absolute_time_t now = get_absolute_time();
         float t = to_us_since_boot(now) / 50000.0f;
-        strips[0].x = -1;
-        strips[0].y = -1;
-        uint8_t action = -1;
-        if (multicore_fifo_rvalid())
+
+        while (t - prev_time < 200)
         {
-            int temp = 0;
-            uint32_t key_press = multicore_fifo_pop_blocking();
-            uint8_t id = (key_press >> 8) & 0xff;
-            action = (key_press) & 0xff;
-            if (!hardwareMap::IS_LEFT_HALF)
-                temp = 6;
-            if (action == 0x01)
+            now = get_absolute_time();
+            t = to_us_since_boot(now) / 50000.0f;
+            strips[0].x = -1;
+            strips[0].y = -1;
+            uint8_t action = -1;
+            if (multicore_fifo_rvalid())
             {
-                strips[0].x = id % 12 - temp;
-                strips[0].y = id / 12;
+                int temp = 0;
+                uint32_t key_press = multicore_fifo_pop_blocking();
+                uint8_t id = (key_press >> 8) & 0xff;
+                action = (key_press) & 0xff;
+                if (!hardwareMap::IS_LEFT_HALF)
+                    temp = 6;
+                if (action == 0x01)
+                {
+                    strips[0].x = id % 12 - temp;
+                    strips[0].y = id / 12;
+                }
+                press_time = t;
             }
-            press_time = t;
+            strips[0].update(press_time, t);
+            target = delayed_by_us(get_absolute_time(), 5000);
+            while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+            {
+                tight_loop_contents();
+            }
         }
-        strips[0].update(press_time, t);
-        target = delayed_by_us(get_absolute_time(), 5000);
-        while (absolute_time_diff_us(get_absolute_time(), target) > 0)
+
+        prev_time = t;
+        current_mode = (mode)((current_mode + 1) % 10);
+
+        for (int i = 0; i < NUM_STRIPS; i++)
         {
-            tight_loop_contents();
+            strips[i].set_pattern_mode(current_mode);
         }
     }
 }

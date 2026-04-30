@@ -108,6 +108,12 @@ void led_strip::update(float ripple_time, float t)
     case CHRISTMAS:
         pattern_christmas(x, y);
         break;
+    case GLITCH:
+        pattern_glitch_rain(t, x, y);
+        break;
+    case HEAT_WAVE:
+        pattern_heat_wave(t, x, y);
+        break;
     default:
         break;
     }

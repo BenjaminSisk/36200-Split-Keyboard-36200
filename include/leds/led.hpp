@@ -25,14 +25,16 @@
 
 typedef enum mode
 {
-    BREATHING,
-    COMET,
-    RAINBOW_CYCLE,
-    TRAVELING_RAINBOW,
-    RIPPLE,
-    COLUMN_FLASH,
-    HEAT_MAP,
-    CHRISTMAS,
+    BREATHING = 0,
+    COMET = 1,
+    RAINBOW_CYCLE = 2,
+    TRAVELING_RAINBOW = 3,
+    RIPPLE = 4,
+    COLUMN_FLASH = 5,
+    HEAT_MAP = 6,
+    CHRISTMAS = 7,
+    GLITCH = 8,
+    HEAT_WAVE = 9,
 } mode_type;
 
 class led_strip
