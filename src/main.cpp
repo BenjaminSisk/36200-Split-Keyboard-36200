@@ -18,7 +18,7 @@ void main1()
         printf("Instance pointer set to: %p\n", (void *)&(strips[i]));
 
         strips[i].set_base_color(0, 255, 0);
-        strips[i].set_pattern_mode(RIPPLE);
+        strips[i].set_pattern_mode(CHRISTMAS);
 
         strips[i].init_pio();
         strips[i].init_dma();

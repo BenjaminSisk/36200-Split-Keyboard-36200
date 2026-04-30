@@ -3,7 +3,7 @@
 #include <cstdint>
 namespace hardwareMap
 {
-    constexpr bool IS_LEFT_HALF = true; // Set to false for right half firmware builds. This can be used for conditional compilation if needed, but ideally the same codebase should work for both halves with the same pin definitions.
+    constexpr bool IS_LEFT_HALF = false; // Set to false for right half firmware builds. This can be used for conditional compilation if needed, but ideally the same codebase should work for both halves with the same pin definitions.
 
     // The constexpr specifier in C++ indicates that a variable or function can be evaluated at compile time. This shifts computations from runtime to compile time, which allows for performance optimizations, earlier bug detection via compile-time checks
     //  both halfs should use the same GPIO pins.
@@ -39,10 +39,10 @@ namespace hardwareMap
      */
     constexpr std::array<std::array<uint8_t, 12>, 4> matrixToId = {{
         // Left Half (0-5)                 // Right Half (6-11)
-        {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},                // Row 0
-        {12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},      // Row 1
-        {24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},      // Row 2
-        {255, 36, 37, 38,  44,  45,  46, 39, 40, 41, 255, 255} // Row 3 (Thumbs)
+        {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},             // Row 0
+        {12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},   // Row 1
+        {24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},   // Row 2
+        {255, 36, 37, 38, 44, 45, 46, 39, 40, 41, 255, 255} // Row 3 (Thumbs)
         //              ^unoccupied  ^Ctrl ^Enter ^Tab ^LayPrev ^LayNext ^Bsp ^Spc ^Sft
     }};
 

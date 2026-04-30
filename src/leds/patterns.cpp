@@ -216,7 +216,7 @@ void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y)
 
 void pattern_column_flash(float t, int x, int y)
 {
-    float decay = 0.99;
+    float decay = 0.995;
 
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -250,6 +250,8 @@ void pattern_column_flash(float t, int x, int y)
 void pattern_heat_map(int x, int y)
 {
     float decay_factor = 0.975;
+    // Static 2D array to track the hue for every individual LED/key
+    static float individual_hues[NUM_STRIPS][LEDS_PER_STRIP];
 
     for (int i = 0; i < NUM_STRIPS; i++)
     {
@@ -265,40 +267,64 @@ void pattern_heat_map(int x, int y)
         }
     }
 
-    if (x < 0 || y < 0)
+    if (x < 0 || y < 0 || x >= LEDS_PER_STRIP || y >= NUM_STRIPS)
         return;
 
-    shadow_leds[y][x][0] = 120.000; // Red
-    shadow_leds[y][x][1] = 120.000; // Green
-    shadow_leds[y][x][2] = 120.000; // Blue
+    // Increment only the hue associated with the specific x/y coordinate
+    individual_hues[y][x] += 30.000;
+    if (individual_hues[y][x] >= 256.000)
+    {
+        individual_hues[y][x] -= 256.000;
+    }
+
+    // Convert the specific hue for this key to RGB
+    hue_to_rgb((uint8_t)individual_hues[y][x], y, x);
+
+    shadow_leds[y][x][0] = (float)leds[y][x].r;
+    shadow_leds[y][x][1] = (float)leds[y][x].g;
+    shadow_leds[y][x][2] = (float)leds[y][x].b;
 }
 
 void pattern_christmas(int x, int y)
 {
-    if (x < 0 || y < 0)
-        return;
-
     float decay = 0.975;
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
+    // Static initialization prevents re-seeding the generator every function call
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(0, 1279);
 
     for (int s = 0; s < NUM_STRIPS; s++)
     {
         for (int p = 0; p < LEDS_PER_STRIP; p++)
         {
-            leds[s][p].r *= decay;
-            leds[s][p].g *= decay;
-            leds[s][p].b *= decay;
+            // 1. Apply decay to the floating-point shadow leds
+            shadow_leds[s][p][0] *= decay;
+            shadow_leds[s][p][1] *= decay;
+            shadow_leds[s][p][2] *= decay;
 
             int random_number = dist(gen);
 
+            // 2. If a random sparkle occurs, update the hue
             if (random_number < 256)
             {
-                hue_to_rgb(random_number, s, p);
+                hue_to_rgb((uint8_t)random_number, s, p);
+
+                // Sync the new color into the shadow leds
+                shadow_leds[s][p][0] = (float)leds[s][p].r;
+                shadow_leds[s][p][1] = (float)leds[s][p].g;
+                shadow_leds[s][p][2] = (float)leds[s][p].b;
+            }
+            else
+            {
+                // 3. Otherwise, sync the decayed shadow values back to the actual leds
+                leds[s][p].r = (uint8_t)shadow_leds[s][p][0] * 0.4;
+                leds[s][p].g = (uint8_t)shadow_leds[s][p][1] * 0.4;
+                leds[s][p].b = (uint8_t)shadow_leds[s][p][2] * 0.4;
             }
         }
     }
+
+    if (x < 0 || y < 0)
+        return;
 }
