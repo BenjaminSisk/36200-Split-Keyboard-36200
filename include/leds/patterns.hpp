@@ -75,13 +75,13 @@ void pattern_heat_map(int x, int y);
 /// @param y
 void pattern_christmas(int x, int y);
 
-/// @brief
+/// @brief looks like blue rain
 /// @param t
 /// @param x
 /// @param y
 void pattern_glitch_rain(float t, int x, int y);
 
-/// @brief
+/// @brief a heat wave
 /// @param t
 /// @param x
 /// @param y

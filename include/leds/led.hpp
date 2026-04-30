@@ -119,7 +119,7 @@ private:
     mode_type mode = BREATHING;
 
     // base colors
-    int r = 255;
+    int r = 0;
     int g = 0;
     int b = 0;
 };

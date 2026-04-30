@@ -31,6 +31,9 @@ void main1()
     float prev_time = 0;
 
     mode current_mode = BREATHING;
+    int r_color = 0;
+    int g_color = 255;
+    int b_color = 0;
 
     while (true)
     {
@@ -69,10 +72,14 @@ void main1()
 
         prev_time = t;
         current_mode = (mode)((current_mode + 1) % 10);
+        r_color = (r_color + 30) % 256;
+        g_color = (g_color + 30) % 256;
+        b_color = (b_color + 30) % 256;
 
         for (int i = 0; i < NUM_STRIPS; i++)
         {
             strips[i].set_pattern_mode(current_mode);
+            strips[i].set_base_color(r_color, g_color, b_color);
         }
     }
 }

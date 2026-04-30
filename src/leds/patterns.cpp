@@ -154,7 +154,7 @@ void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y)
 {
     float global_decay = 0.975;
 
-    // 1. Apply global decay to all pixels first
+    // Apply global decay to all pixels first
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
@@ -177,7 +177,7 @@ void pattern_ripple(float t, float ripple_time, float decay_val, int x, int y)
     float speed_multiplier = 0.1;
     float current_radius = (t - ripple_time) * speed_multiplier / 10000000000000000;
 
-    // 2. Calculate the moving ripple effect
+    // Calculate the moving ripple effect
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
@@ -298,14 +298,14 @@ void pattern_christmas(int x, int y)
     {
         for (int p = 0; p < LEDS_PER_STRIP; p++)
         {
-            // 1. Apply decay to the floating-point shadow leds
+            // Apply decay to the floating-point shadow leds
             shadow_leds[s][p][0] *= decay;
             shadow_leds[s][p][1] *= decay;
             shadow_leds[s][p][2] *= decay;
 
             int random_number = dist(gen);
 
-            // 2. If a random sparkle occurs, update the hue
+            // If a random sparkle occurs, update the hue
             if (random_number < 256)
             {
                 hue_to_rgb((uint8_t)random_number, s, p);
@@ -317,7 +317,7 @@ void pattern_christmas(int x, int y)
             }
             else
             {
-                // 3. Otherwise, sync the decayed shadow values back to the actual leds
+                // Otherwise, sync the decayed shadow values back to the actual leds
                 leds[s][p].r = (uint8_t)shadow_leds[s][p][0] * 0.4;
                 leds[s][p].g = (uint8_t)shadow_leds[s][p][1] * 0.4;
                 leds[s][p].b = (uint8_t)shadow_leds[s][p][2] * 0.4;
@@ -335,7 +335,7 @@ void pattern_glitch_rain(float t, int x, int y)
     float decay_factor = 0.985;
     static float last_drop_time = 0.000;
 
-    // 1. Decay logic
+    // Decay logic
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         for (int j = 0; j < LEDS_PER_STRIP; j++)
@@ -350,7 +350,7 @@ void pattern_glitch_rain(float t, int x, int y)
         }
     }
 
-    // 2. Timing logic
+    // Timing logic
     if (t - last_drop_time > 10.000)
     {
         last_drop_time = t;
@@ -360,7 +360,7 @@ void pattern_glitch_rain(float t, int x, int y)
         std::uniform_int_distribution<int> col_dist(0, LEDS_PER_STRIP - 1);
         std::uniform_int_distribution<int> hue_dist(120, 180);
 
-        // 3. Shift pixels "down"
+        // Shift pixels "down"
         for (int i = NUM_STRIPS - 1; i > 0; i--)
         {
             for (int j = 0; j < LEDS_PER_STRIP; j++)
@@ -379,7 +379,7 @@ void pattern_glitch_rain(float t, int x, int y)
             }
         }
 
-        // 4. Create new drops at the top
+        // Create new drops at the top
         for (int k = 0; k < 2; k++)
         {
             int random_col = col_dist(gen);
@@ -403,8 +403,7 @@ void pattern_heat_wave(float t, int x, int y)
 {
     float decay_factor = 0.920;
 
-    // 1. Decay and Shift
-    // We shift pixels to the right to create a "wave" motion
+    // Decay and Shift
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         for (int j = LEDS_PER_STRIP - 1; j >= 0; j--)
@@ -428,18 +427,15 @@ void pattern_heat_wave(float t, int x, int y)
         }
     }
 
-    // 2. Wave Generation
-    // We use sin() based on time (t in 0.05s units) to pulse the first column
+    // Wave Generation
     for (int i = 0; i < NUM_STRIPS; i++)
     {
         // t / 5.000 controls the speed of the wave oscillation
-        // i * 0.500 offsets the wave for each strip (the 'diagonal' look)
+        // i * 0.500 offsets the wave for each strip
         float wave = sin((t / 5.000) + (i * 0.800));
 
-        // Map sine (-1 to 1) to hue range (0 to 40 for fire colors)
         uint8_t hue = (uint8_t)(20.000 + (wave * 20.000));
 
-        // If a button is pressed, significantly shift the hue to "cool" the wave
         if (x >= 0 && y >= 0)
         {
             hue = (uint8_t)(hue + 120) % 256;
